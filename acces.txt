@@ -1,0 +1,7 @@
+http://10.194.69.15/phpmyadmin
+
+
+user: A2
+
+
+pw: 08DeFYaH16z75hVx
