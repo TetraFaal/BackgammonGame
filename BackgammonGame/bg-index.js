@@ -1,7 +1,7 @@
-const mysql = require('mysql')
-const express = require('express')
-const app = express()
-const bodyParser = require('body-parser')
+const mysql = require('mysql');
+const express = require('express');
+const app = express();
+const bodyParser = require('body-parser');
 
 let con = mysql.createConnection({
 	host: "10.194.69.15",
@@ -28,4 +28,15 @@ app.post('/signup', function (req, res) {
 	  if (error) throw error;
 	  res.send(results);
 	});
+});
+
+app.listen(3000, function () {
+  console.log('Example app listening on port 3000!')
+})
+
+process.on('SIGTERM', () => {
+  console.log('Closing http server.');
+  server.close(() => {
+    console.log('Http server closed.');
+  });
 });

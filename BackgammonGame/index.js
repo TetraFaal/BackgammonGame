@@ -1,8 +1,8 @@
 //update index.js
-const mysql = require('mysql')
-const express = require('express')
-const app = express()
-const bodyParser = require('body-parser')
+const mysql = require('mysql');
+const express = require('express');
+const app = express();
+const bodyParser = require('body-parser');
 
 let con = mysql.createConnection({
 	host: "10.194.69.15",
@@ -70,47 +70,3 @@ process.on('SIGTERM', () => {
     console.log('Http server closed.');
   });
 });
-/*
-app.get('/', function(req, res){
-	res.send('Hello igor !')
-})
-
-
-
-
-app.get('/allperson', function(req, res){
-	con.query('SELECT * FROM person', (err, results) => {
-		if(err) throw err;
-		res.end(JSON.stringify(results));
-	});
-})
-
-app.get('/person', function(req, res){ //enlever le :id de allperson/:id pour pouvoir faire "localhost:3000/person?id=4" -> facilite pour ajax
-	con.query('SELECT * FROM person WHERE id=?', [req.query.id], //remplacer req.params.id par req.query.id
-	function (err, results){
-		if (err) throw err;
-			res.end(JSON.stringify(results));
-	});
-});
-
-
-app.listen(3000, function(){
-	console.log('Example app listening on port 3000 !')
-})
-//ajouté séance 3
-app.post('/addPerson', function (req, res) {
-   var postData  = req.body;
-   con.query('INSERT INTO person SET ?', postData, function (error, results, fields) {
-	  if (error) throw error;
-	  res.end(JSON.stringify(results));
-	});
-});
-
-app.delete('/deletePerson', function (req, res) {
-   console.log(req.body);
-   con.query('DELETE FROM `person` WHERE `id`=?', [req.body.id], function (error, results, fields) {
-	  if (error) throw error;
-	  res.end('Record has been deleted!');
-	});
-});
-*/
