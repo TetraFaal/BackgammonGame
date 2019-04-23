@@ -11,8 +11,8 @@ app.use(bodyParser.urlencoded({extended: true}));
 let dice1Value = 0;
 let dice2Value = 0;
 
-let p1_pos = [0,0,0,0,0,5,0,3,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,2,0]; //Start position of p1
-let p2_pos = [0,2,0,0,0,0,0,0,0,0,0,5,0,0,0,0,3,0,5,0,0,0,0,0,0]; //start position of p2
+let p1_pos = [0,0,0,0,0,0,5,0,3,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,2,0]; //Start position of p1
+let p2_pos = [0,2,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,3,0,5,0,0,0,0,0,0]; //start position of p2
 
 /*
 let con = mysql.createConnection({
@@ -24,7 +24,7 @@ let con = mysql.createConnection({
 
 con.connect(function(err){
 	if (err) throw err;
-	console.log('Connected!');
+	console.log('Connectedto database !');
 });
 */
 app.get('/api/main', (req, res) => {
@@ -39,7 +39,7 @@ app.get('/api/newGame', (req, res) => {
 app.post('/api/login', (req, res) => {
   console.log(req.body);
   res.send(
-    `I received your POST login request. This is what you sent me: ${req.body.post}`,
+    `Vous êtes connecté avec le pseudo : ${req.body.post}`,
   );
 });
 app.get('/api/dice', (req, res) => {

@@ -4,9 +4,8 @@ class Login extends Component {
 
 	state = {
 		response: '',
-		post: '',
-		responseToPost: '',
-		pawns: ['red', 'black']
+		playerName: '',
+		responseToPost: ''
 	};
 
 	loginSubmit = async e => {
@@ -16,34 +15,40 @@ class Login extends Component {
           headers: {
             'Content-Type': 'application/json',
           },
-        body: JSON.stringify({ post: this.state.post }),
+        body: JSON.stringify({ post: this.state.playerName }),
       });
       const body = await response.text();
-
       this.setState({ responseToPost: body });
 	};
+
+	startGame = () => {
+		this.props.startGame(this.state.playerName);
+	}
 
 	render() {
 		return (
 			<div className='Login'>
-				<h1>Backgammon</h1>
-				<form onSubmit={this.loginSubmit}>
-		        	<p><strong>Entrez votre pseudo</strong></p>
+				<p><strong>Entrez votre pseudo</strong></p>
 		        	<input
 		        		type="text"
-		        		value={this.state.post}
-		        		onChange={e => this.setState({ post: e.target.value })}
+		        		value={this.state.playerName}
+		        		onChange={e => this.setState({ playerName: e.target.value })}
 		        	/>
-		        	<button type="submit">Jouer !</button>
-		      	</form>
-		      	<p>{this.state.responseToPost}</p>
-		      	{
-	        		this.state.pawns.map(pawn => (
-	        			<img
-	        				className="pawn"
-        					src={`./img/${pawn}.png`} />
-	        		))
-	        	}
+				{
+					this.state.playerName !== '' ?
+						/\s/.test(this.state.playerName) ?
+							<p>Le pseudo ne peut contenir d'espaces</p> :
+					        <React.Fragment>
+					        	<form onSubmit={this.loginSubmit}>
+					        		<button onClick={this.startGame} type="submit">Jouer !</button>
+					      		</form>
+					      		<p>{this.state.responseToPost}</p>
+				      		</React.Fragment>
+				      	:
+			      		<React.Fragment>
+			      		</React.Fragment>
+				}
+
 	      	</div>
 		);
 	}

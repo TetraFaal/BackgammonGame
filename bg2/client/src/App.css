@@ -7,9 +7,32 @@
   align-items: center;
 }
 
+.Gameboard {
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.board {
+  display: grid;
+  width: 390px;
+  height: 480px;
+  grid-template-columns: repeat(13, 30px);
+  grid-template-rows: 240px 240px;
+  outline: 1px solid black;
+}
+
+.place {
+  text-align: center;
+  outline: 1px solid black;
+}
+
+.place:hover {
+  background-color : grey;
+}
+
 .pawn {
   width: 30px;
   height: 30px;
-  cursor: pointer;
 }
 
