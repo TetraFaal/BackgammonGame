@@ -1,9 +1,6 @@
 import React, { Component } from 'react';
-import ReactDOM from 'react-dom';
-import logo from './logo.svg';
-import black from './black.png';
-import red from './red.png';
 import './App.css';
+import Login from './containers/Login';
 
 class App extends Component {
   state = {
@@ -39,21 +36,7 @@ class App extends Component {
     this.setState({ p1_pos: body.p1_pos });
     this.setState({ p2_pos: body.p2_pos });
   };
-  /*
-  handleSubmit = async e => {
-      e.preventDefault();
-      const response = await fetch('/api/world', {
-        method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        body: JSON.stringify({ post: this.state.post }),
-      });
-      const body = await response.text();
-
-      this.setState({ responseToPost: body });
-  };
-  */
+  
   diceSubmit = async e => {
     e.preventDefault();
     const response = await fetch('/api/dice');
@@ -69,28 +52,10 @@ class App extends Component {
   render() {
       return (
         <div className="App">
-          <header className="App-header">
-            <img src={logo} className="App-logo" alt="logo" />
-          </header>
-          <p>{this.state.response}</p>
-
+          <Login/>
           <form onSubmit={this.play}>
             <button type="submit">Jouer</button>
           </form>
-
-          <form onSubmit={this.handleSubmit}>
-            <p>
-             <strong>Post to Server:</strong>
-            </p>
-            <input
-              type="text"
-              value={this.state.post}
-              onChange={e => this.setState({ post: e.target.value })}
-            />
-            <button type="submit">Submit</button>
-          </form>
-          <p>{this.state.responseToPost}</p>
-
           <form onSubmit={this.diceSubmit}>
             <button type="submit">Lancer dés</button>
           </form>

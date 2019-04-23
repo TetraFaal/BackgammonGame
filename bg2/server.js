@@ -35,13 +35,13 @@ app.get('/api/newGame', (req, res) => {
   res.send( {p1_pos,p2_pos} );
 });
 
-/*
-app.post('/api/world', (req, res) => {
+
+app.post('/api/login', (req, res) => {
   console.log(req.body);
   res.send(
-    `I received your POST request. This is what you sent me: ${req.body.post}`,
+    `I received your POST login request. This is what you sent me: ${req.body.post}`,
   );
-});*/
+});
 app.get('/api/dice', (req, res) => {
   dice1Value = throwDice();
   dice2Value = throwDice();
