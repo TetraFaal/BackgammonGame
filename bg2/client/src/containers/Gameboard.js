@@ -43,29 +43,59 @@ class Gameboard extends Component {
 
 	setPos() {
 		const positions = [];
-		let l = 25;	
+		let l = 25;
+		let index = 0;	
 
 		for(let i = 0; i < 26; i++) {
 			const position = {};
-
+/*
+			if(this.state.p1_pos[i] === this.state.p2_pos[i]) position.color = "white-text";
+			else if (this.state.p1_pos[i]>this.state.p2_pos[i]) position.color = "black-text";
+			else if (this.state.p1_pos[i]<this.state.p2_pos[i]) position.color = "red-text";
+*/
 			if(i<13) {
-				position.value = this.state.p1_pos[i] + this.state.p2_pos[i];
+				if(this.state.p1_pos[i] !== 0) {
+					position.value = this.state.p1_pos[i]
+					position.color = "black";
+				}
+				else if (this.state.p1_pos[i] === this.state.p2_pos[i]) {
+					position.value = 0;
+					position.color = "white";
+				}
+				else {
+					position.value = this.state.p2_pos[i];
+					position.color = "red";
+				}
 			}
 			else {
 				let p = l - i;
-				position.value = this.state.p1_pos[i+p] + this.state.p2_pos[i+p];
+				if(this.state.p1_pos[i+p] !== 0) {
+					position.value = this.state.p1_pos[i+p];
+					position.color = "black";
+				}
+				else if (this.state.p1_pos[i+p] === this.state.p2_pos[i+p]) {
+					position.value = 0;
+					position.color = "white";
+				}
+				else {
+					position.value = this.state.p2_pos[i+p]
+					position.color = "red";
+				}
 				l = l - 1;
 			}
-
-			if(this.state.p1_pos[i] === 0 || this.state.p2_pos[i] === 0) position.color = "white";
-			else if (this.state.p1_pos[i]>this.state.p2_pos[i]) position.color = "black";
-			else position.color = "red";
-
+			position.index = index;
+			index ++;
 			positions.push(position);
 
 		}
 
 		return positions;
+	}
+
+	function updatePos (position) {
+		alert(position.value);
+		return 
+
 	}
 
 	newGame = async e => {
@@ -86,16 +116,21 @@ class Gameboard extends Component {
 		this.setState({ dice2Value: body[1] });
   	}
 
-  	movePawn = (pos, dice1Value, dice2Value) => {
-  		alert('Left Click');
-  	}
-
-  	rightclick() {
-    	let rightclick;
+  	movePawn() {
+  		let value
+    	let rightclick; 
    		let e = window.event;
     	if (e.which) rightclick = (e.which === 3);
     	else if (e.button) rightclick = (e.button === 2);
-   		alert(rightclick); // true or false, you can trap right click here by if comparison
+   		//alert(rightclick); //true or false, you can trap right click here by if comparison
+		if (rightclick) {
+			value = Math.min(this.state.dice1Value, this.state.dice2Value)
+			alert(value, position.value);
+		}
+		else {
+			value = Math.max(this.state.dice1Value, this.state.dice2Value)
+			alert(value,this.positionIndex);
+		}
 	} 
 
   	render() {
@@ -108,9 +143,11 @@ class Gameboard extends Component {
 	        	<div className="board">
 	        	{
 	        		this.state.positions.map((position, i) => (
-	        			<div key={i} className="place" onMouseDown={() => this.rightclick()}>
-	        				{position.value}
-	        			</div>
+	        			position.value !== 0 ? 
+	        			<div key={i} className="place" onMouseDown={() => this.updatePos(position)}>
+	        				<span className={position.color}>{position.value}</span>
+	        			</div>:
+	        			<div className="place"></div>
 	        		))
 	        	}
 	        	</div>

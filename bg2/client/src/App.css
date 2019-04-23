@@ -31,8 +31,14 @@
   background-color : grey;
 }
 
-.pawn {
-  width: 30px;
-  height: 30px;
+.white {
+  opacity: 0.0;
 }
 
+.black {
+  color: black;
+}
+
+.red {
+  color: red;
+}
