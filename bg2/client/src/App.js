@@ -1,17 +1,12 @@
 import React, { Component } from 'react';
+import {connect} from 'react-redux'
 import './App.css';
-import Login from './containers/Login';
-import Gameboard from './containers/Gameboard';
+import LoginComponent from './containers/LoginComponent';
+import GameboardComponent from './containers/GameboardComponent';
+//import Gameboard from './containers/Gameboard';
 
 class App extends Component {
-  state = {
-      response: '',
-      post: '',
-      responseToPost: '',
-      playerName: '',
-      gameStarted: false
-  };
-
+  
   startGame = (playerName) => {
     this.setState({
       playerName,
@@ -39,13 +34,26 @@ class App extends Component {
         <div className="App">
           <h1>Backgammon</h1>
           {
-            !this.state.gameStarted ?
-            <Login startGame={this.startGame}/> :
-            <Gameboard playerName={this.state.playerName}/>
+            !this.props.loginSuccess ?
+            <LoginComponent/> :
+            <GameboardComponent/>
           }
         </div>
       );
     }
 }
 
-export default App;
+const mapStateToProps = (state) => {
+  return {
+    post: state.reducer.post,
+    response: state.reducer.response,
+    responseToPost: state.reducer.responseToPost,
+    loginSuccess: state.reducer.loginSuccess
+  }
+}
+const mapDispatchToProps = (dispatch) => {
+  return {
+  }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(App);

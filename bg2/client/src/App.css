@@ -6,6 +6,9 @@
   justify-content: center;
   align-items: center;
 }
+.Login {
+  text-align: center;
+}
 
 .Gameboard {
   flex-direction: column;
@@ -32,7 +35,7 @@
 }
 
 .white {
-  opacity: 0.0;
+  color: blue;
 }
 
 .black {

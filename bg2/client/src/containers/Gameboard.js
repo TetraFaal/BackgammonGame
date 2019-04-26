@@ -12,8 +12,9 @@ class Gameboard extends Component {
     	p1_pos: [],
      	p2_pos: [],
      	positions: [],
-     	places: []
-	}
+     	places: [],
+     	pos: 0
+   	}
 
 	componentDidMount() {
 		const places = this.createPlaces();
@@ -92,10 +93,16 @@ class Gameboard extends Component {
 		return positions;
 	}
 
-	function updatePos (position) {
-		alert(position.value);
-		return 
-
+	updatePos (positionIndex) {
+		let value;
+		if(this.rightClick()) {
+			value = Math.min(this.state.dice1Value, this.state.dice2Value);
+			alert(positionIndex);
+		}
+		else {
+			value = Math.max(this.state.dice1Value, this.state.dice2Value);
+			alert(value);
+		}	
 	}
 
 	newGame = async e => {
@@ -116,21 +123,23 @@ class Gameboard extends Component {
 		this.setState({ dice2Value: body[1] });
   	}
 
-  	movePawn() {
-  		let value
+  	rightClick() {
     	let rightclick; 
    		let e = window.event;
     	if (e.which) rightclick = (e.which === 3);
     	else if (e.button) rightclick = (e.button === 2);
    		//alert(rightclick); //true or false, you can trap right click here by if comparison
 		if (rightclick) {
-			value = Math.min(this.state.dice1Value, this.state.dice2Value)
-			alert(value, position.value);
+			return true;
 		}
 		else {
-			value = Math.max(this.state.dice1Value, this.state.dice2Value)
-			alert(value,this.positionIndex);
+			return false;
 		}
+	}
+
+	update = (evt, position) => {
+		this.setState({pos: evt.target.value.index});
+		alert(this.state.pos)
 	} 
 
   	render() {
@@ -143,8 +152,8 @@ class Gameboard extends Component {
 	        	<div className="board">
 	        	{
 	        		this.state.positions.map((position, i) => (
-	        			position.value !== 0 ? 
-	        			<div key={i} className="place" onMouseDown={() => this.updatePos(position)}>
+	        			position.value !== 0 ?
+	        			<div key={i} className="place" onMouseDown={this.updat(position.value)}>
 	        				<span className={position.color}>{position.value}</span>
 	        			</div>:
 	        			<div className="place"></div>
@@ -156,7 +165,7 @@ class Gameboard extends Component {
 				</form>
 				<p>{this.state.dice1Value} {this.state.dice2Value}</p>
 	        </div>
-     	 );
+     	);
     }
 }
 
