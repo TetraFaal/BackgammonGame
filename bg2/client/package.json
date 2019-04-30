@@ -8,10 +8,11 @@
     "react-redux": "^5.1.1",
     "react-scripts": "2.1.8",
     "redux": "^4.0.1",
-    "redux-logger": "^3.0.6"
+    "redux-logger": "^3.0.6",
+    "socket.io-client": "^2.2.0"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "set PORT=3001 && react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
@@ -25,5 +26,5 @@
     "not ie <= 11",
     "not op_mini all"
   ],
-  "proxy": "http://localhost:5000/"
+  "proxy":"http://localhost:3000"
 }

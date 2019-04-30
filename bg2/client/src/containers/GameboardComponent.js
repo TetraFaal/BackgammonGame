@@ -5,61 +5,65 @@ import{ setPos, setPos1, setPos2, setDice1, setDice2} from '../actions/index'
 
 class Gameboard extends Component {
 
-	newGame = async e => {
-	    e.preventDefault();
-	    const response = await fetch('/api/newGame');
-		const body = await response.json();
-		this.props.getPositions1(body.p1_pos);
-		this.props.getPositions2(body.p2_pos);
-		this.props.getPositions(this.props.p1_pos,this.props.p2_pos);
-  	}
-  
-  	diceSubmit = async e => {
-		e.preventDefault();
-		const response = await fetch('/api/dice');
-		const body = await response.json();
-		this.props.getDice1(body[0]);
-		this.props.getDice2(body[1]);
+	componentDidMount() {
+		const {socket} = this.props;
+		socket.on('diceValues', data => {
+			this.props.getDice1(data[0]);
+			this.props.getDice2(data[1]);
+		})
+		socket.on('newGamePos', data => {
+			this.props.getPositions1(data[0]);
+			this.props.getPositions2(data[1]);
+			this.props.getPositions(this.props.p1_pos,this.props.p2_pos);
+		})
+	} 
+
+	newGame = () => {
+		const {socket} = this.props;
+		socket.emit('startNewGame')
 	}
 
-	rightClick = () => {
+	diceSubmit = () => {
+		const {socket} = this.props;
+		socket.emit('throwDice')
+	}
+
+	rightClick() {
 		let rightclick; 
 		let e = window.event;
-		if(e !== undefined) {
-		  if (e.which) rightclick = (e.which === 3);
-		  else if (e.button) rightclick = (e.button === 2);
-		  if (rightclick) {
-			alert(true)
-		  }
-		  else {
-			alert(false)
-		  }
-		}      	
+		if (e.which === 3 || e.button === 2);
+		//alert(rightclick); //true or false, you can trap right click here by if comparison
+		if (rightclick) {
+			return true;
+		}
+		else {
+			return false;
+		}
 	}
 
-  	render() {
-      	return (
-	        <div className="Gameboard">
-	        	<p>Connecté en tant que : {this.props.playerName}</p>
-	        	<Button action={this.newGame} buttonTitle = "Nouvelle partie" />
+	render() {
+		return (
+			<div className="Gameboard">
+				<p>Connecté en tant que : {this.props.playerName}</p>
+				<Button action={this.newGame} buttonTitle = "Nouvelle partie" />
 				<p>{this.props.p1_pos}</p>
 				<p>{this.props.p2_pos}</p>
 				<div className="board">
-	        	{
-	        		this.props.positions.map((position, i) => (
-	        			position.value !== 0 ?
-	        			<div key={i} className="place" onMouseDown={this.rightClick()}>
-	        				<span className={position.color}>{position.value}</span>
-	        			</div>:
-	        			<div className="place"></div>
-	        		))
+				{
+					this.props.positions.map((position, i) => (
+						position.value !== 0 ?
+						<div key={i} className="place">
+							<span className={position.color}>{position.value}</span>
+						</div>:
+						<div className="place"></div>
+					))
 				}
-	        	</div>
+				</div>
 				<Button action={this.diceSubmit} buttonTitle = "Lancer dés" />
 				<p>{this.props.dice1Value} {this.props.dice2Value}</p>
-	        </div>
-     	);
-    }
+			</div>
+		);
+	}
 }
 
 const mapStateToProps = (state) => {
@@ -72,9 +76,9 @@ const mapStateToProps = (state) => {
 		dice1Value: state.reducer.dice1Value,
 		dice2Value: state.reducer.dice2Value,
 	}
-  }
+}
   
-  const mapDispatchToProps = (dispatch) => {
+const mapDispatchToProps = (dispatch) => {
 	return {
 		getPositions1: (pos1) => {
 			dispatch(setPos1(pos1))
@@ -92,7 +96,7 @@ const mapStateToProps = (state) => {
 			dispatch(setPos(pos1,pos2))
 		}
 	}
-  }
+}
 
 export default connect(mapStateToProps, mapDispatchToProps)(Gameboard);
 

@@ -1,0 +1,3 @@
+- déplacement jetons
+- salons
+- lancer le jeu slmt si 2 joueurs 
