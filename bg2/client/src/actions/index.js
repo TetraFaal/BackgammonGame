@@ -1,36 +1,3 @@
-/*
-export const incrementCount = count => {
-  const num = count+1
-  return {
-  type: 'INCREMENT_COUNT',
-  count: num
-  }
-}
-
-export const decrementCount = count => {
-  const num = count-1
-  return {
-    type: 'DECREMENT_COUNT',
-    count: num
-  }
-}
-
-export const multiplyCount = count => {
-  const num = count*2
-  return {
-    type: 'MULITPLY_COUNT',
-    count: num
-  }
-}
-
-export const fillArray = (array,value) => {
-  const arrayTemp = array+value
-  return {
-    type: 'FILL_ARRAY',
-    array: arrayTemp
-  }
-}
-*/
 export const updateName = (playerName) => {
   const tempName = playerName
   return {
@@ -58,11 +25,8 @@ export const setResponse = (response) => {
 export const setPos = (pos1,pos2) => {
   let temp = [];
   let l = 25;
-	let index = 0;
-
   for(let i = 0; i < 26; i++) {
-    const position = {};    
-    position.index = index;
+    const position = {};
     if(i<13) {
       if(pos1[i] !== 0) {
         position.value = pos1[i]
@@ -76,6 +40,7 @@ export const setPos = (pos1,pos2) => {
         position.value = pos2[i];
         position.color = "red";
       }
+      position.index = i;
     }
     else {
       let p = l - i;
@@ -92,8 +57,8 @@ export const setPos = (pos1,pos2) => {
         position.color = "red";
       }
       l = l - 1;
+      position.index = i+p;
     }
-    index ++;
     temp.push(position);
   }
   return {
@@ -127,5 +92,12 @@ export const setDice2 = (dice2) => {
   return {
     type: 'SET_DICE2',
     dice2Value: temp
+  }
+}
+export const selectPos = (index) => {
+  const temp = index
+  return {
+    type: 'SELECT_POS',
+    posIndex: temp
   }
 }

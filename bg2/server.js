@@ -17,7 +17,6 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 
-
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(session);
@@ -25,12 +24,6 @@ app.use(session);
 io.use(sharedsession(session, {
   autoSave: true
 }));
-
-let status = true;
-val = 0;
-
-let p1_pos = [0,0,0,0,0,0,5,0,3,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,2,0]; //Start position of p1
-let p2_pos = [0,2,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,3,0,5,0,0,0,0,0,0]; //start position of p2
 
 /*
 let con = mysql.createConnection({
@@ -45,42 +38,72 @@ con.connect(function(err){
 	console.log('Connectedto database !');
 });
 */
-
-app.get('/api/newGame', (req, res) => {
-  res.send( {p1_pos,p2_pos} );
-})
-
+/*
 app.post('/api/login', (req, res) => {
   console.log(req.body);
   res.send(status);
-})
+})*/
 
 io.on('connection', socket => {
+  let username = '';  
+  let p1_pos = [];
+  let p2_pos = [];
   console.log('User connected')
+
   socket.on("login", function(userdata) {
     console.log(userdata)
     socket.handshake.session.userdata = userdata;
     socket.handshake.session.save();
   });
+
   socket.on("logout", function(userdata) {
     if (socket.handshake.session.userdata) {
       delete socket.handshake.session.userdata;
       socket.handshake.session.save();
     }
   });
-  socket.on('throwDice', () => {
-    const dice1Value = throwDice()
-    const dice2Value = throwDice()
-    io.sockets.emit('diceValues', [dice1Value,dice2Value] );
-  })
+
+  socket.on('username', data => {
+    username = data;
+    socket.emit('loginStatus', true)
+  });
+
   socket.on('startNewGame', () => {
-    io.sockets.emit('newGamePos', [p1_pos,p2_pos] );
-  })
+    const p1_pos_init = [0,0,0,0,0,0,5,0,3,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,2,0]; //Start position of p1
+    const p2_pos_init = [0,2,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,3,0,5,0,0,0,0,0,0]; //start position of p2
+    p1_pos = p1_pos_init;
+    p2_pos = p2_pos_init;
+    console.log("New Game ",p1_pos_init)
+    console.log("New game ",p2_pos_init)
+    console.log("New Game ",p1_pos)
+    console.log("New game ",p2_pos)
+    io.sockets.emit('newGamePos', [p1_pos,p2_pos]);
+  });
+
+  socket.on('movePawn', data => {
+    const index = data[0];
+    console.log("index is : ", index);
+    const diceValue = data[1];
+    console.log("dice value is : ", diceValue);
+    let newPos = move(true, p1_pos, p2_pos, index, diceValue);
+    p1_pos = newPos.p1_pos;
+    p2_pos = newPos.p2_pos;
+    console.log(p1_pos)
+    console.log(p2_pos)
+    io.sockets.emit('updatePos', [p1_pos,p2_pos])
+  });
+
+  socket.on('throwDice', () => {
+    const dice1Value = throwDice();
+    const dice2Value = throwDice();
+    io.sockets.emit('diceValues', [dice1Value,dice2Value] );
+  });
+
   socket.on('disconnect', () => {
     console.log('User disconnected')
     clearInterval()    
-  })
-})
+  });
+});
 
 server.listen(port, () => console.log(`Listening on port ${port}`));
 
@@ -95,14 +118,112 @@ function throwDice(){
   return (Math.floor(Math.random() * 6)) + 1; //return number between 0 and 5 we add 1 to make it from 1 to 6
 }
 
-function updatePos (positionIndex) {
-  let value;
-  if(this.rightClick()) {
-    value = Math.min(this.props.dice1Value, this.props.dice2Value);
-    alert(value,positionIndex);
+function move(player, newP1_pos, newP2_pos, position, diceValue){ 
+	//if p1 player = true, if p2 player = false
+	//newP1_pos position of player1
+	//newP2_pos potion of player2
+	//position is the actual position of the pawn (integer)
+	//numberDice is the number of the dice
+
+  let canPlay = false;
+
+	//verification that there is at least one possible move
+	if (player) {
+		for(i = 1; i++; i < 26){
+      //if there is a pawn && The movement is not out of the board &&	The movement leads to an equal or less than 1 opponent pawn -> then p1 can play
+      if((newP1_pos[i] >= 1) && (i - diceValue > 0) && (newP2_pos[i - diceValue] <= 1)) {
+        canPlay = true;
+        break;
+      }
+    }
+  }
+  else if (!player) {
+		for(i = 0; i++; i < 25){
+      //if there is a pawn && The movement is not out of the board &&	The movement leads to an equal or less than 1 opponent pawn -> then p1 can play
+      if((newP2_pos[i] >= 1) && (i + diceValue < 25) && (newP1_pos[i - diceValue] <= 1)) {
+        canPlay = true;
+        break;
+      }
+		}
+  }
+  else console.log("There is a problem with the player");
+
+	if(!canPlay){
+    console.log("pas de move")
+		io.sockets.emit('message', "Pas de mouvements possibles" );
+		return {
+      p1_pos: newP1_pos,
+      p2_pos: newP2_pos
+    };
   }
   else {
-    value = Math.max(this.props.dice1Value, this.props.dice2Value);
-    alert(value);
-  }	
+    if(player){ //for p1
+      if(newP1_pos[position] > 0) {
+        if(position-diceValue <= 0){ //case where the pawn goes out of the board (it may have omponent pawn too)
+          newP1_pos[position] -= 1;
+          newP1_pos[0] += 1;
+        }
+        else{
+          if(newP2_pos[position-diceValue] <= 1){
+            if(newP2_pos[position-diceValue] == 1){	//If there is one pawn at the next pos
+              newP2_pos[position-diceValue] -= 1; 	//Delete this one
+              newP2_pos[0] += 1;	//add him to the pos 0
+            }
+            newP1_pos[position] -= 1;					//-1 at the actual position
+            newP1_pos[position-diceValue] += 1;		//+1 at the next position
+          }
+          else { 
+            console.log("cannot move HERE")
+            return {
+              p1_pos: newP1_pos,
+              p2_pos: newP2_pos
+            };
+          }
+        }
+      }
+      else {
+        console.log("no pawn HERE")
+        return {
+          p1_pos: newP1_pos,
+          p2_pos: newP2_pos
+        };
+      }
+    }
+    else if(!player){ //Same for p2
+      if(newP1_pos[position] > 0) {
+        if(position+diceValue >= 25){ //case where the pawn goes out of the board (it may have omponent pawn too)
+          newP2_pos[position] -= 1;
+          newP2_pos[25] += 1;
+        }
+        else{
+          if(newP1_pos[position+diceValue] <=1){
+            if(newP1_pos[position+diceValue] == 1){
+              newP1_pos[position+diceValue] -= 1;
+              newP1_pos[25] += 1;
+            }
+            newP2_pos[position] -=1;
+            newP2_pos[position+diceValue] += 1;
+          }
+        }
+      }
+      else {
+        console.log("no pawn HERE")
+        return {
+          p1_pos: newP1_pos,
+          p2_pos: newP2_pos
+        };
+      }
+    }
+    else {
+      console.log("There is a problem with the player");
+      return {
+        p1_pos: newP1_pos,
+        p2_pos: newP2_pos
+      };
+    }
+  }
+	return {
+    p1_pos: newP1_pos,
+    p2_pos: newP2_pos
+  }
 }

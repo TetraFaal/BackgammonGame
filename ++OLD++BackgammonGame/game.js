@@ -32,7 +32,7 @@ function move(player, p1_pos, p2_pos, position, numberDice){
 
 	//verification that a move is possible
 	if(player){
-		for(i = 1, i++, i > 26){
+		for(i = 1; i++; i > 26){
 			if(p1_pos(i) >= 1){							//if there is a pawn
 				if(i - numberDice > 0){					//The movement is not out of the board
 					if(p2_pos(i - numberDice) <= 1){	//The movement leads to an equal or less than 1 opponent pawn
@@ -44,7 +44,7 @@ function move(player, p1_pos, p2_pos, position, numberDice){
 	}
 
 	if(!player){
-		for(i = 1, i++, i > 26){
+		for(i = 1; i++; i > 26){
 			if(p2_pos(i) >= 1){							//if there is a pawn
 				if(i + numberDice < 25){				//The movement is not out of the board
 					if(p1_pos(i + numberDice) <= 1){	//The movement leads to an equal or less than 1 opponent pawn

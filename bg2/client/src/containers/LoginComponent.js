@@ -5,21 +5,20 @@ import{updateName, isLoginSucces} from '../actions/index'
 
 class LoginComponent extends Component {
 
+	componentDidMount() {
+		const {socket} = this.props;
+		socket.on('loginStatus', data => {
+			this.props.checkSuccess(data);
+		})
+	}
+
 	handleOnChangeName = (value) => {
 		this.props.onChangeName(value)
 	}
 
 	handleSubmit = async e => {
-    e.preventDefault();
-    const response = await fetch('/api/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ post: this.props.playerName }),
-    });
-		const body = await response.json();
-		this.props.checkSuccess(body)
+		const {socket} = this.props;
+		socket.emit('username', [this.props.playerName])
   };
 
 	render() {

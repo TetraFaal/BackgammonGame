@@ -1,12 +1,14 @@
 const initialState = {
     loginSuccess: false,
     playerName: '',
+    opponentName: '',
     response: '',
     dice1Value: 0,
     dice2Value: 0,
     p1_pos: [],
     p2_pos: [],
-    positions: []
+    positions: [],
+    posIndex: ''
 }
 
 function Reducer (state = initialState, action){
@@ -36,6 +38,9 @@ function Reducer (state = initialState, action){
             return {...state, ...action}
         }
         case "SET_DICE2": {
+            return {...state, ...action}
+        }
+        case "SELECT_POS": {
             return {...state, ...action}
         }
         default:
