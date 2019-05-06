@@ -83,6 +83,8 @@ io.on('connection', socket => {
     const index = data[0];
     const diceValue = data[1];
     const playerNo = data[2];
+    console.log(p1_pos)
+    console.log(p2_pos)
     console.log("Place", index, "moved by", diceValue, "by player", playerNo)
     let newPos = move(playerNo, p1_pos, p2_pos, index, diceValue);
     p1_pos = newPos.p1_pos;
@@ -179,7 +181,7 @@ function move(player, newP1_pos, newP2_pos, position, diceValue){
         }
         else{
           if(newP2_pos[position-diceValue] <= 1){
-            if(newP2_pos[position-diceValue] == 1){	//If there is one pawn at the next pos
+            if(newP2_pos[position-diceValue] == 1){	//If there is one opponent pawn at the next pos
               newP2_pos[position-diceValue] -= 1; 	//Delete this one
               newP2_pos[0] += 1;	//add him to the pos 0
             }
@@ -204,7 +206,7 @@ function move(player, newP1_pos, newP2_pos, position, diceValue){
       }
     }
     else if(player===2){ //Same for p2
-      if(newP1_pos[position] > 0) {
+      if(newP2_pos[position] > 0) {
         if(position+diceValue >= 25){ //case where the pawn goes out of the board (it may have omponent pawn too)
           newP2_pos[position] -= 1;
           newP2_pos[25] += 1;
@@ -219,7 +221,7 @@ function move(player, newP1_pos, newP2_pos, position, diceValue){
             newP2_pos[position+diceValue] += 1;
           }
           else { 
-            console.log("cannot move HERE")
+            console.log("cannot move here")
             return {
               p1_pos: newP1_pos,
               p2_pos: newP2_pos
@@ -228,7 +230,7 @@ function move(player, newP1_pos, newP2_pos, position, diceValue){
         }
       }
       else {
-        console.log("no pawn HERE")
+        console.log("no pawn here")
         return {
           p1_pos: newP1_pos,
           p2_pos: newP2_pos
