@@ -1,7 +1,11 @@
 const initialState = {
     loginSuccess: false,
     playerName: '',
-    opponentName: '',
+    player1Name: 'Joueur 1',
+    player2Name: 'Joueur 2',
+    player1Ready: false,
+    player2Ready: false,
+    playerNo: 0,
     response: '',
     dice1Value: 0,
     dice2Value: 0,
@@ -41,6 +45,15 @@ function Reducer (state = initialState, action){
             return {...state, ...action}
         }
         case "SELECT_POS": {
+            return {...state, ...action}
+        }
+        case "SET_PLAYER1": {
+            return {...state, ...action}
+        }
+        case "SET_PLAYER2": {
+            return {...state, ...action}
+        }
+        case "SET_PLAYER_NO": {
             return {...state, ...action}
         }
         default:

@@ -101,3 +101,26 @@ export const selectPos = (index) => {
     posIndex: temp
   }
 }
+export const setPlayer1 = (playerData) => {
+  const temp = playerData
+  return {
+    type: 'SET_PLAYER1',
+    player1Name: temp[0],
+    player1Ready: temp[1]
+  }
+}
+export const setPlayer2 = (playerData) => {
+  const temp = playerData
+  return {
+    type: 'SET_PLAYER2',
+    player2Name: temp[0],
+    player2Ready: temp[1]
+  }
+}
+export const setPlayerNo = (playerNo) => {
+  const temp = playerNo
+  return {
+    type: 'SET_PLAYER_NO',
+    playerNo: temp
+  }
+}

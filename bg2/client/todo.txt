@@ -1,4 +1,2 @@
-- choix + afficher j1 j2
-- interaction slmt j1 ou j2
 - salons
-- lancer le jeu slmt si 2 joueurs 
+- tour à tour (lancer dés + bouger pions)

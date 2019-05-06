@@ -16,6 +16,12 @@
   align-items: center;
 }
 
+.Players {
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
 .board {
   display: grid;
   width: 390px;
@@ -33,6 +39,9 @@
 .place:hover {
   background-color : grey;
 }
+.place:focus{
+  background-color : rgb(196, 196, 196);
+}
 
 .white {
   color: blue;
@@ -44,4 +53,12 @@
 
 .red {
   color: red;
+}
+.button-black {
+  color: black;
+  size: 20px;
+}
+.button-red {
+  color: red;
+  size: 20px;
 }

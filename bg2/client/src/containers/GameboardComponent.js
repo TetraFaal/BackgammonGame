@@ -11,22 +11,22 @@ class Gameboard extends Component {
 			this.props.getDice1(data[0]);
 			this.props.getDice2(data[1]);
 		})
-		socket.on('newGamePos', data => {
-			this.props.getPositions1(data[0]);
-			this.props.getPositions2(data[1]);
-			this.props.getPositions(this.props.p1_pos,this.props.p2_pos);
-		})
 		socket.on('updatePos', data => {
 			this.props.getPositions1(data[0]);
 			this.props.getPositions2(data[1]);
 			this.props.getPositions(this.props.p1_pos,this.props.p2_pos);
 		})
-	} 
+		socket.on('newGamePos', data => {
+			this.props.getPositions1(data[0]);
+			this.props.getPositions2(data[1]);
+			this.props.getPositions(this.props.p1_pos,this.props.p2_pos);
+        })
+	}
 
 	newGame = () => {
 		const {socket} = this.props;
 		socket.emit('startNewGame')
-	}
+    }
 
 	diceSubmit = () => {
 		const {socket} = this.props;
@@ -35,7 +35,7 @@ class Gameboard extends Component {
 
 	movePawn = diceValue => {
 		const {socket} = this.props;
-		socket.emit('movePawn', [this.props.posIndex,diceValue])
+		socket.emit('movePawn', [this.props.posIndex,diceValue,this.props.playerNo])
 	}
 
 	handleClick(i, event) {
@@ -45,13 +45,6 @@ class Gameboard extends Component {
 	render() {
 		return (
 			<div className="Gameboard">
-				<p>Connecté en tant que : {this.props.playerName}</p>
-				<div>
-
-				</div>
-				<div>
-					<Button action={this.newGame} buttonTitle = "Nouvelle partie" />
-				</div>
 				<div className="board">
 				{
 					this.props.positions.map((position, i) => (
@@ -75,8 +68,7 @@ class Gameboard extends Component {
 const mapStateToProps = (state) => {
 	return {
 		playerName: state.reducer.playerName,
-		opponentName: state.reducer.opponentName,
-		response: state.reducer.response,
+		playerNo: state.reducer.playerNo,
 		positions: state.reducer.positions,
 		p1_pos: state.reducer.p1_pos,
 		p2_pos: state.reducer.p2_pos,
