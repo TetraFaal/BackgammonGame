@@ -39,14 +39,17 @@ con.connect(function(err){
 });
 */
 
+let p1_pos = [];
+let p2_pos = [];
+let p1Name = '';
+let p2Name = '';
+let p1Ready = '';
+let p2Ready = '';
+
 io.on('connection', socket => {
   let username = '';
-  let p1_pos = [];
-  let p2_pos = [];
-  let p1Name = '';
-  let p2Name = '';
-  let p1Ready = '';
-  let p2Ready = '';
+  let playedDice = 0;
+  let hasPlayed = false;
 
   console.log('User connected')
 
@@ -69,37 +72,60 @@ io.on('connection', socket => {
     socket.emit('loginStatus', true)
   });
 
-  socket.on('startNewGame', () => {
+  socket.on('startNewGame', data => {
+    const playerNo = data
     const p1_pos_init = [0,0,0,0,0,0,5,0,3,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,2,0]; //Start position of p1
     const p2_pos_init = [0,2,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,3,0,5,0,0,0,0,0,0]; //start position of p2
     p1_pos = p1_pos_init;
     p2_pos = p2_pos_init;
-    console.log("New Game ",p1_pos)
-    console.log("New game ",p2_pos)
     io.sockets.emit('newGamePos', [p1_pos,p2_pos]);
+    io.sockets.emit('nextTurn', playerNo)
   });
 
+  // Called when the player wants to move a pawn
   socket.on('movePawn', data => {
     const index = data[0];
     const diceValue = data[1];
-    const playerNo = data[2];
-    console.log(p1_pos)
-    console.log(p2_pos)
+    const diceNo = data[2];
+    const playerNo = data[3];
+
+    /*
+    index : the index number of the pawn place
+    diceValue : the value of the played dice
+    diceNo : the dice number (1 or 2)
+    playerNo : the player number (1 or 2)
+    */
     console.log("Place", index, "moved by", diceValue, "by player", playerNo)
+
     let newPos = move(playerNo, p1_pos, p2_pos, index, diceValue);
     p1_pos = newPos.p1_pos;
     p2_pos = newPos.p2_pos;
-    console.log(p1_pos)
-    console.log(p2_pos)
+    hasPlayed = newPos.hasPlayed;
+
+    //fonction victoire
+
     io.sockets.emit('updatePos', [p1_pos,p2_pos])
+
+    if(hasPlayed) {
+      io.sockets.emit('dicePlayed', diceNo)
+      if(playedDice == 1) {
+        io.sockets.emit('nextTurn', playerNo) //emits the player that finished the turn
+        playedDice = 0
+      }
+      else {
+        playedDice ++
+      }
+    }    
   });
 
+  //Called when the player throws the dices
   socket.on('throwDice', () => {
     const dice1Value = throwDice();
     const dice2Value = throwDice();
     io.sockets.emit('diceValues', [dice1Value,dice2Value] );
   });
 
+  //Called when users choose their "seat" (player1 or player2)
   socket.on('choosePlayer', data => {
     if (data[2] == 1) {
       p1Name = data[0];
@@ -135,17 +161,27 @@ function throwDice(){
 }
 
 function move(player, newP1_pos, newP2_pos, position, diceValue){ 
-	//if p1 : player = 1, if p2 : player = 2
-	//newP1_pos position of player1
-	//newP2_pos potion of player2
-	//position is the actual position of the pawn (integer)
-	//numberDice is the number of the dice
 
   let canPlay = false;
+  let hasPlayed = false;
 
-	//verification that there is at least one possible move
-	if (player===1) {
-		for(i = 1; i++; i < 26){
+  /*
+	if player1 : player = 1, if player2 : player = 2
+	newP1_pos : new pawn positions of player1
+	newP2_pos : new pawn positions of player2
+	position : the actual position(aka index) of the pawn that the player wants to move(integer)
+  diceValue : value of the dice chosen by the player
+  
+  canPlay : true if the player has at least one possible move
+  hasPlayed : true if the player could actually move the selected pawn 
+  */
+
+
+  /*
+  Verifies that there is at least one possible move
+  */
+	if (player==1) {
+		for(i = 1; i < 26; i++){
       //if there is a pawn && The movement is not out of the board &&	The movement leads to an equal or less than 1 opponent pawn -> then p1 can play
       if((newP1_pos[i] >= 1) && (i - diceValue > 0) && (newP2_pos[i - diceValue] <= 1)) {
         canPlay = true;
@@ -153,100 +189,124 @@ function move(player, newP1_pos, newP2_pos, position, diceValue){
       }
     }
   }
-  else if (player===2) {
-		for(i = 0; i++; i < 25){
+  else if (player==2) {
+		for(i = 0; i < 25; i++){
       //if there is a pawn && The movement is not out of the board &&	The movement leads to an equal or less than 1 opponent pawn -> then p2 can play
-      if((newP2_pos[i] >= 1) && (i + diceValue < 25) && (newP1_pos[i + diceValue] <= 1)) {
+      if( (newP2_pos[i] >= 1) && (i + diceValue < 25) && (newP1_pos[i + diceValue] <= 1) ) {
         canPlay = true;
         break;
       }
 		}
   }
-  else console.log("There is a problem with the player");
+  else {
+    console.log("There is a problem with the player")
+    return {
+      p1_pos: newP1_pos,
+      p2_pos: newP2_pos,
+    };
+  }
 
 	if(!canPlay){
     console.log("pas de move")
-		io.sockets.emit('message', "Pas de mouvements possibles" );
-		return {
+    hasPlayed = false
+    return {
       p1_pos: newP1_pos,
-      p2_pos: newP2_pos
+      p2_pos: newP2_pos,
+      hasPlayed: hasPlayed
     };
   }
   else {
-    if(player===1){ //for p1
-      if(newP1_pos[position] > 0) {
-        if(position-diceValue <= 0){ //case where the pawn goes out of the board (it may have omponent pawn too)
+    /*
+    Moving pawn if player 1
+    */
+    if(player==1){ //for p1
+      if(newP1_pos[position] > 0) { //place must have one pawn
+        if(position-diceValue <= 0 && (newP1_pos[1]+newP1_pos[2]+newP1_pos[3]+newP1_pos[4]+newP1_pos[5]+newP1_pos[6])==15){ //case where the pawn goes out of the board (it may have omponent pawn too) -> all the pawns need to be last zone (upper left quarter of the board)
           newP1_pos[position] -= 1;
           newP1_pos[0] += 1;
         }
-        else{
-          if(newP2_pos[position-diceValue] <= 1){
-            if(newP2_pos[position-diceValue] == 1){	//If there is one opponent pawn at the next pos
-              newP2_pos[position-diceValue] -= 1; 	//Delete this one
-              newP2_pos[0] += 1;	//add him to the pos 0
-            }
-            newP1_pos[position] -= 1;					//-1 at the actual position
-            newP1_pos[position-diceValue] += 1;		//+1 at the next position
+        else if(newP2_pos[position-diceValue] <= 1){
+          if(newP2_pos[position-diceValue] == 1){	//If there is one opponent pawn at the next pos
+            newP2_pos[position-diceValue] -= 1; 	//Delete this one
+            newP2_pos[0] += 1;	//add him to the pos 0
           }
-          else { 
-            console.log("cannot move HERE")
-            return {
-              p1_pos: newP1_pos,
-              p2_pos: newP2_pos
-            };
-          }
+          newP1_pos[position] -= 1;					//-1 at the actual position
+          newP1_pos[position-diceValue] += 1;		//+1 at the next position
         }
-      }
-      else {
-        console.log("no pawn HERE")
-        return {
-          p1_pos: newP1_pos,
-          p2_pos: newP2_pos
-        };
-      }
-    }
-    else if(player===2){ //Same for p2
-      if(newP2_pos[position] > 0) {
-        if(position+diceValue >= 25){ //case where the pawn goes out of the board (it may have omponent pawn too)
-          newP2_pos[position] -= 1;
-          newP2_pos[25] += 1;
-        }
-        else{
-          if(newP1_pos[position+diceValue] <=1){
-            if(newP1_pos[position+diceValue] == 1){
-              newP1_pos[position+diceValue] -= 1;
-              newP1_pos[25] += 1;
-            }
-            newP2_pos[position] -=1;
-            newP2_pos[position+diceValue] += 1;
-          }
-          else { 
-            console.log("cannot move here")
-            return {
-              p1_pos: newP1_pos,
-              p2_pos: newP2_pos
-            };
-          }
+        else { 
+          console.log("cannot move here")
+          hasPlayed = false
+          return {
+            p1_pos: newP1_pos,
+            p2_pos: newP2_pos,
+            hasPlayed: hasPlayed
+          };
         }
       }
       else {
         console.log("no pawn here")
+        hasPlayed = false
         return {
           p1_pos: newP1_pos,
-          p2_pos: newP2_pos
+          p2_pos: newP2_pos,
+          hasPlayed: hasPlayed
+        };
+      }
+    }
+    /*
+    Same if player 2
+    */
+    else if(player==2){
+      if(newP2_pos[position] > 0) {
+        let total = (newP2_pos[24]+newP2_pos[23]+newP2_pos[22]+newP2_pos[21]+newP2_pos[20]+newP2_pos[19])
+        console.log(total)
+        if(total == 15) console.log("je suce des bites")
+        if(position+diceValue >= 25 && total == 15){ //case where the pawn goes out of the board (it may have omponent pawn too)
+          newP2_pos[position] -= 1;
+          newP2_pos[25] += 1;
+        }
+        else if(newP1_pos[position+diceValue] <=1){
+          if(newP1_pos[position+diceValue] == 1){
+            newP1_pos[position+diceValue] -= 1;
+            newP1_pos[25] += 1;
+          }
+          newP2_pos[position] -=1;
+          newP2_pos[position+diceValue] += 1;
+        }
+        else { 
+          console.log("cannot move here")
+          hasPlayed = false
+          return {
+            p1_pos: newP1_pos,
+            p2_pos: newP2_pos,
+            hasPlayed: hasPlayed
+          };
+        }
+      }
+      else {
+        console.log("no pawn here")
+        hasPlayed = false
+        return {
+          p1_pos: newP1_pos,
+          p2_pos: newP2_pos,
+          hasPlayed: hasPlayed
         };
       }
     }
     else {
       console.log("There is a problem with the player");
+      hasPlayed = false
       return {
         p1_pos: newP1_pos,
-        p2_pos: newP2_pos
+        p2_pos: newP2_pos,
+        hasPlayed: hasPlayed
       };
     }
   }
+  hasPlayed = true
 	return {
     p1_pos: newP1_pos,
-    p2_pos: newP2_pos
+    p2_pos: newP2_pos,
+    hasPlayed: hasPlayed
   }
 }

@@ -1,2 +1,3 @@
 - salons
-- tour à tour (lancer dés + bouger pions)
+- victoire
+- recevoir infos

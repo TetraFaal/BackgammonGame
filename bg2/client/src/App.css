@@ -24,23 +24,22 @@
 
 .board {
   display: grid;
-  width: 390px;
+  width: 415px;
   height: 480px;
-  grid-template-columns: repeat(13, 30px);
-  grid-template-rows: 240px 240px;
+  margin: 5px;
+  grid-template-columns: 55px repeat(12, 30px);
+  grid-template-rows: 430px 50px;
   outline: 1px solid black;
+  background: url(./img/board.png)
 }
 
 .place {
   text-align: center;
-  outline: 1px solid black;
+  padding: 5px;
 }
 
 .place:hover {
-  background-color : grey;
-}
-.place:focus{
-  background-color : rgb(196, 196, 196);
+  text-shadow: 2px 2px 2px black;
 }
 
 .white {
@@ -48,11 +47,11 @@
 }
 
 .black {
-  color: black;
+  color: #161D38;
 }
 
 .red {
-  color: red;
+  color: #5366B8;
 }
 .button-black {
   color: black;
@@ -61,4 +60,10 @@
 .button-red {
   color: red;
   size: 20px;
+}
+.dice {
+  text-align: center;
+  outline: 1px solid black;
+  margin: 5px;
+  padding: 2px;
 }

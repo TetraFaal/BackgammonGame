@@ -1,8 +1,8 @@
-export const updateName = (playerName) => {
-  const tempName = playerName
+export const updateName = (username) => {
+  const tempName = username
   return {
     type: 'UPDATE_NAME',
-    playerName: tempName
+    username: tempName
   }
 }
 export const isLoginSucces = (loginState) => {
@@ -27,14 +27,18 @@ export const setPos = (pos1,pos2) => {
   let l = 25;
   for(let i = 0; i < 26; i++) {
     const position = {};
-    if(i<13) {
-      if(pos1[i] !== 0) {
+    if(i < 13) {
+      if(i === 0) {
+        position.value = `Out1:${pos1[i]}\nIn2:${pos2[i]}`
+        position.color = "blue"
+      }
+      else if(pos1[i] !== 0) {
         position.value = pos1[i]
         position.color = "black";
       }
       else if (pos1[i] === pos2[i]) {
         position.value = 0;
-        position.color = "white";
+        position.color = "blue";
       }
       else {
         position.value = pos2[i];
@@ -42,15 +46,19 @@ export const setPos = (pos1,pos2) => {
       }
       position.index = i;
     }
-    else {
+    else{
       let p = l - i;
-      if(pos1[i+p] !== 0) {
+      if(i === 13) {
+        position.value = `Out2:${pos2[i+p]}\n\nIn1:${pos1[i+p]}`
+        position.color = "blue"
+      }
+      else if(pos1[i+p] !== 0) {
         position.value = pos1[i+p];
         position.color = "black";
       }
       else if (pos1[i+p] === pos2[i+p]) {
         position.value = 0;
-        position.color = "white";
+        position.color = "blue";
       }
       else {
         position.value = pos2[i+p]
@@ -78,43 +86,6 @@ export const setPos2 = (pos2) => {
   return {
     type: 'SET_POS2',
     p2_pos: temp
-  }
-}
-export const setDice1 = (dice1) => {
-  const temp = dice1
-  return {
-    type: 'SET_DICE1',
-    dice1Value: temp
-  }
-}
-export const setDice2 = (dice2) => {
-  const temp = dice2
-  return {
-    type: 'SET_DICE2',
-    dice2Value: temp
-  }
-}
-export const selectPos = (index) => {
-  const temp = index
-  return {
-    type: 'SELECT_POS',
-    posIndex: temp
-  }
-}
-export const setPlayer1 = (playerData) => {
-  const temp = playerData
-  return {
-    type: 'SET_PLAYER1',
-    player1Name: temp[0],
-    player1Ready: temp[1]
-  }
-}
-export const setPlayer2 = (playerData) => {
-  const temp = playerData
-  return {
-    type: 'SET_PLAYER2',
-    player2Name: temp[0],
-    player2Ready: temp[1]
   }
 }
 export const setPlayerNo = (playerNo) => {

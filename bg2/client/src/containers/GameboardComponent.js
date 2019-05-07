@@ -1,15 +1,33 @@
 import React, { Component } from 'react'
 import Button from '../components/Button'
 import {connect} from 'react-redux'
-import{ setPos, setPos1, setPos2, setDice1, setDice2, selectPos} from '../actions/index'
+import{ setPos, setPos1, setPos2} from '../actions/index'
 
 class Gameboard extends Component {
+
+	state = {
+		dice1Value: '',
+		dice2Value: '',
+		posIndex: '',
+		playerTurn: false,
+		diceThrown: false,
+	};
 
 	componentDidMount() {
 		const {socket} = this.props;
 		socket.on('diceValues', data => {
-			this.props.getDice1(data[0]);
-			this.props.getDice2(data[1]);
+			this.setState({ diceThrown : true })
+			this.setState({ dice1Value : data[0] });
+			this.setState({ dice2Value : data[1] });
+		})
+		socket.on('dicePlayed', data => {
+			let diceNo = data;
+			if(diceNo === 1) {
+				this.setState({ dice1Value : '' })
+			}
+			else if (diceNo === 2){
+				this.setState({ dice2Value : '' })
+			}
 		})
 		socket.on('updatePos', data => {
 			this.props.getPositions1(data[0]);
@@ -20,26 +38,34 @@ class Gameboard extends Component {
 			this.props.getPositions1(data[0]);
 			this.props.getPositions2(data[1]);
 			this.props.getPositions(this.props.p1_pos,this.props.p2_pos);
-        })
+		})
+		socket.on('nextTurn', data => {
+			console.log(data)
+			console.log(this.props.playerNo)
+			if(data === this.props.playerNo) {
+				this.setState({ playerTurn : false })
+			}
+			else {
+				this.setState({ playerTurn : true })
+				this.setState({ diceThrown : false })
+			}
+		})
 	}
-
-	newGame = () => {
-		const {socket} = this.props;
-		socket.emit('startNewGame')
-    }
 
 	diceSubmit = () => {
 		const {socket} = this.props;
 		socket.emit('throwDice')
 	}
 
-	movePawn = diceValue => {
+	movePawn = (diceValue, diceNo) => {
 		const {socket} = this.props;
-		socket.emit('movePawn', [this.props.posIndex,diceValue,this.props.playerNo])
+		if(diceValue !== '') {
+			socket.emit('movePawn', [this.state.posIndex,diceValue, diceNo,this.props.playerNo])
+		}
 	}
 
 	handleClick(i, event) {
-		this.props.selectPosIndex(i)
+		this.setState({ posIndex : i })
 	}
 
 	render() {
@@ -56,10 +82,23 @@ class Gameboard extends Component {
 					))
 				}
 				</div>
-				<p>{this.props.posIndex}</p>
-				<Button action={this.diceSubmit} buttonTitle = "Lancer dés" />
-				<Button action={this.movePawn.bind(this, this.props.dice1Value)} buttonTitle = {this.props.dice1Value} />
-				<Button action={this.movePawn.bind(this, this.props.dice2Value)} buttonTitle = {this.props.dice2Value} />			
+				<p>{this.state.posIndex}</p>
+				{
+					this.state.playerTurn ?
+					<div>
+						{
+							this.state.diceThrown ?
+							<div></div>:
+							<Button action={this.diceSubmit} buttonTitle = "Lancer dés" />
+						}						
+						<Button action={this.movePawn.bind(this, ...[this.state.dice1Value, 1])} buttonTitle = {this.state.dice1Value} />
+						<Button action={this.movePawn.bind(this, ...[this.state.dice2Value, 2])} buttonTitle = {this.state.dice2Value} />
+					</div> :
+					<div>
+						<span className="dice">{this.state.dice1Value}</span>
+						<span className="dice">{this.state.dice2Value}</span>
+					</div>
+				}
 			</div>
 		);
 	}
@@ -67,14 +106,10 @@ class Gameboard extends Component {
 
 const mapStateToProps = (state) => {
 	return {
-		playerName: state.reducer.playerName,
 		playerNo: state.reducer.playerNo,
-		positions: state.reducer.positions,
 		p1_pos: state.reducer.p1_pos,
 		p2_pos: state.reducer.p2_pos,
-		dice1Value: state.reducer.dice1Value,
-		dice2Value: state.reducer.dice2Value,
-		posIndex: state.reducer.posIndex,
+		positions: state.reducer.positions,
 	}
 }
   
@@ -86,18 +121,9 @@ const mapDispatchToProps = (dispatch) => {
 		getPositions2: (pos2) => {
 			dispatch(setPos2(pos2))
 		},
-		getDice1: (dice1) => {
-			dispatch(setDice1(dice1))
-		},
-		getDice2: (dice2) => {
-			dispatch(setDice2(dice2))
-		},
 		getPositions: (pos1,pos2) => {
 			dispatch(setPos(pos1,pos2))
 		},
-		selectPosIndex: (index) => {
-			dispatch(selectPos(index))
-		}
 	}
 }
 
