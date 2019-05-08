@@ -29,7 +29,7 @@ export const setPos = (pos1,pos2) => {
     const position = {};
     if(i < 13) {
       if(i === 0) {
-        position.value = `Out1:${pos1[i]}\nIn2:${pos2[i]}`
+        position.value = `Out1:\n${pos1[i]}\nIn2:\n${pos2[i]}`
         position.color = "blue"
       }
       else if(pos1[i] !== 0) {
@@ -49,7 +49,7 @@ export const setPos = (pos1,pos2) => {
     else{
       let p = l - i;
       if(i === 13) {
-        position.value = `Out2:${pos2[i+p]}\n\nIn1:${pos1[i+p]}`
+        position.value = `Out2:\n${pos2[i+p]}\nIn1:\n${pos1[i+p]}`
         position.color = "blue"
       }
       else if(pos1[i+p] !== 0) {

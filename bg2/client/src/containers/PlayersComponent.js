@@ -10,6 +10,7 @@ class Players extends Component {
         player2Name: 'Joueur 2',
         player1Ready: false,
         player2Ready: false,
+        canLeave: false,
     };
 
     componentDidMount() {
@@ -26,11 +27,26 @@ class Players extends Component {
                 player2Ready: data[1]
             })
         })
+        socket.on('canLeave', data => {
+            this.setState({canLeave : data})
+        })
+        socket.on('victory', data => {
+            window.alert(`Le joueur ${data} a gagné`)
+        })
+        socket.on('message', data => {
+            window.alert(data)
+        })
 	} 
 
 	newGame = () => {
 		const {socket} = this.props;
 		socket.emit('startNewGame', this.props.playerNo)
+    }
+
+    leave = () => {
+        const {socket} = this.props;
+        socket.emit('leave', this.props.playerNo)
+        this.props.setPlayerNumber(0)
     }
     
     choosePlayer = (playerNoInput) => {
@@ -40,24 +56,27 @@ class Players extends Component {
             if(playerNoInput === 1 && !this.state.player1Ready){
                 isReady = true;
                 this.props.setPlayerNumber(playerNoInput)
-                console.log([this.props.username, isReady, playerNoInput])
                 socket.emit('choosePlayer', [this.props.username, isReady, playerNoInput])
             }
-            if(playerNoInput === 2 && !this.state.player2Ready){
+            else if(playerNoInput === 2 && !this.state.player2Ready ){
                 isReady = true;
                 this.props.setPlayerNumber(playerNoInput)
-                console.log([this.props.username, isReady, playerNoInput])
                 socket.emit('choosePlayer', [this.props.username, isReady, playerNoInput])
             }
         }
     }
-
+    
 	render() {
 		return (
 			<div className="Players">
                 <p>Connecté en tant que : {this.props.username}</p>
-               <Button class="black" action={this.choosePlayer.bind(this, 1)} buttonTitle = {this.state.player1Name} />
+                <Button class="black" action={this.choosePlayer.bind(this, 1)} buttonTitle = {this.state.player1Name} />
                 <Button class="red" action={this.choosePlayer.bind(this, 2)} buttonTitle = {this.state.player2Name} />
+                {
+                    this.state.canLeave ? 
+                    <Button action={this.leave} buttonTitle = "Quitter" /> :
+                    <div></div>
+                }
                 {
                     (this.state.player1Ready === true && this.state.player2Ready === true) ?
                     <Button action={this.newGame} buttonTitle = "Nouvelle partie" /> :
