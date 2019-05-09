@@ -1,1 +1,13 @@
 - salons
+
+
+Enregistrer partie si quitte
+
+Si revient boutton reprendre partie en +
+Si les deux joueurs avait une partie en cours
+S'ils cliquent sur nouvelle aprtie supprimer l'instance existante dans partie en cours
+
+
+Enregistrer une partie finie
+
+Page statistique

@@ -26,7 +26,7 @@ io.use(sharedsession(session, {
   autoSave: true
 }));
 
-/*
+
 let con = mysql.createConnection({
 	host: "10.194.69.15",
 	user: "A2",
@@ -36,9 +36,9 @@ let con = mysql.createConnection({
 
 con.connect(function(err){
 	if (err) throw err;
-	console.log('Connectedto database !');
+	console.log('Connected to database ! \n');
 });
-*/
+
 
 let p1_pos = ['','','','','','','','','','','','','','','','','','','','','','','','','',''];
 let p2_pos = ['','','','','','','','','','','','','','','','','','','','','','','','','',''];
@@ -54,7 +54,6 @@ io.on('connection', socket => {
   let playedDice = 0;
   let hasPlayed = false;
   let victory = false;
-
   console.log('User connected')
 
   socket.on("login", function(userdata) {
@@ -72,19 +71,37 @@ io.on('connection', socket => {
 
   socket.on('username', data => {
     username = data[0];
-    console.log(username, 'is now connected')
     socket.emit('loginStatus', true)
     //On login, server sends the actual situation to the new-coming user
     socket.emit('updatePos', [p1_pos,p2_pos])
     socket.emit('updatePlayer1', [p1Name, p1Ready])
     socket.emit('updatePlayer2', [p2Name, p2Ready])
     socket.emit('diceValues', [dice1Value,dice2Value]);
+
+    con.query("SELECT name FROM players WHERE name=?", [username],function(err,rows){
+      console.log("\n>>> [mysql error] :",err, "\n");
+      if(!err){
+        if(rows && rows.length){
+          console.log(username, "is now connected, user already exists in db")
+        }
+        else{
+          con.query("INSERT INTO players(name) VALUES (?)",[username], function(err2, rows){
+            console.log("\n>>> [mysql error] :", err2, "\n");
+            console.log(user, "is now connected, user succesfully added to database")
+          });
+        }
+      }
+    });
+
+    //RECUP PARTIE EN COURS SI YEN A UNE
   });
 
   socket.on('startNewGame', data => {
     const playerNo = data
-    const p1_pos_init = [0,0,0,0,0,0,5,0,3,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,2,0]; //Start position of p1 
-    const p2_pos_init = [0,2,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,3,0,5,0,0,0,0,0,0]; //start position of p2
+    //const p1_pos_init = [0,0,0,0,0,0,5,0,3,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,2,0]; //Start position of p1 
+    //const p2_pos_init = [0,2,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,3,0,5,0,0,0,0,0,0]; //start position of p2
+    const p1_pos_init = [14,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+    const p2_pos_init = [0,2,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,3,0,5,0,0,0,0,0,0]; 
     p1_pos = p1_pos_init;
     p2_pos = p2_pos_init;
     io.sockets.emit('newGamePos', [p1_pos,p2_pos]);
@@ -114,6 +131,14 @@ io.on('connection', socket => {
     io.sockets.emit('updatePos', [p1_pos,p2_pos])
     if(victory) {
       io.sockets.emit('victory', playerNo)
+      
+      //Quand 3 points ?
+      con.query("INSERT INTO person(id,name,last_name, age) VALUES ('19', 'Mikeal', 'Asoi', '34')",function(err,rows){
+        console.log("Data inserted !");
+        if(err) throw err;
+      });
+  
+
     }
 
     if(hasPlayed) {
@@ -172,6 +197,9 @@ io.on('connection', socket => {
 
   socket.on('disconnect', () => {
     console.log('User disconnected')
+
+
+    //ENREGISTRER PARTIE EN COURS
   });
 });
 
@@ -267,7 +295,6 @@ function move(player, newP1_pos, newP2_pos, position, diceValue, socket){
         pawnSum = (newP1_pos[0]+newP1_pos[1]+newP1_pos[2]+newP1_pos[3]+newP1_pos[4]+newP1_pos[5]+newP1_pos[6])
         console.log(pawnSum)
         if(position-diceValue <= 0 && pawnSum ==15){ //case where the pawn goes out of the board (it may have omponent pawn too) -> all the pawns need to be last zone (upper left quarter of the board)
-          console.log("je suce des bites")
           newP1_pos[position] -= 1;
           newP1_pos[0] += 1;
         }

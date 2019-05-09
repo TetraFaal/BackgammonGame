@@ -9,7 +9,7 @@ import PlayersComponent from './containers/PlayersComponent'
 const socket = io("http://localhost:3000");
 
 class App extends Component {
-  
+
   render() {
     return (
       <div className="App">
