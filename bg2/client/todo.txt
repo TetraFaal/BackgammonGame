@@ -1,13 +1,28 @@
-- salons
+- salons !!
 
 
-Enregistrer partie si quitte
 
-Si revient boutton reprendre partie en +
-Si les deux joueurs avait une partie en cours
+- Entrer l'instance ou récup partie{
+    finir la récuperation de partie
+    Faire qqch des données récupérées
+}
+
+- Enregistrer une partie finie{
+     voir les rows mettre les bons id
+}
+
+
+- Enregistrer partie si quitte {
+    
+    Supprimer les joueurs en cours
+}
+
+
+
+
+
+bloquer jeu si un quitte
+Si nouveau revient obligé nouvelle aprtie
+Si c'est les deux mêmes joueurs reprendre ou nouvelle partie
 S'ils cliquent sur nouvelle aprtie supprimer l'instance existante dans partie en cours
-
-
-Enregistrer une partie finie
-
 Page statistique

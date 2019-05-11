@@ -79,31 +79,55 @@ io.on('connection', socket => {
     socket.emit('diceValues', [dice1Value,dice2Value]);
 
     con.query("SELECT name FROM players WHERE name=?", [username],function(err,rows){
-      console.log("\n>>> [mysql error] :",err, "\n");
+      console.log("\n>>> [mysql error] :",err)
       if(!err){
         if(rows && rows.length){
           console.log(username, "is now connected, user already exists in db")
         }
         else{
           con.query("INSERT INTO players(name) VALUES (?)",[username], function(err2, rows){
-            console.log("\n>>> [mysql error] :", err2, "\n");
-            console.log(user, "is now connected, user succesfully added to database")
+            console.log("\n>>> [mysql error] :", err2)
+            console.log(username, "is now connected, user succesfully added to database")
           });
         }
       }
     });
 
-    //RECUP PARTIE EN COURS SI YEN A UNE
   });
 
   socket.on('startNewGame', data => {
-    const playerNo = data
+    let playerNo = data
     //const p1_pos_init = [0,0,0,0,0,0,5,0,3,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,2,0]; //Start position of p1 
     //const p2_pos_init = [0,2,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,3,0,5,0,0,0,0,0,0]; //start position of p2
     const p1_pos_init = [14,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
     const p2_pos_init = [0,2,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,3,0,5,0,0,0,0,0,0]; 
     p1_pos = p1_pos_init;
     p2_pos = p2_pos_init;
+
+
+    getRunningGames(function(rows1){
+      getRunningGames(function(rows1){
+        if(rows1 != "no"){
+          p1_pos = rows1[1]
+          p2_pos = rows1[2]
+          playerNo = rows1[7]
+
+          points_p1 = 0
+          points_p2 = 0
+          // dice1Value = rows1[]
+          // dice2Value = rows[]
+          // playerNo = rows1[]
+          
+        }
+        else{
+          con.query("INSERT INTO running_games(pos_p1, pos_p2, points_p1, points_p2, dice1, dice2, player_turn, hub, player1, player2) VALUES(?, ?, 0, 0, 0, 0, ?, 0, (SELECT id FROM players WHERE name=?), (SELECT id FROM players WHERE name=?))", [JSON.stringify(p1_pos),JSON.stringify(p2_pos),playerNo,p1Name, p2Name], function(err,rows){
+            console.log("\n>>> [mysql error] :", err)
+          });
+        }
+      });
+    });
+   
+    console.log(p1_pos)
     io.sockets.emit('newGamePos', [p1_pos,p2_pos]);
     io.sockets.emit('nextTurn', playerNo)
   });
@@ -131,12 +155,33 @@ io.on('connection', socket => {
     io.sockets.emit('updatePos', [p1_pos,p2_pos])
     if(victory) {
       io.sockets.emit('victory', playerNo)
-      
-      //Quand 3 points ?
-      con.query("INSERT INTO person(id,name,last_name, age) VALUES ('19', 'Mikeal', 'Asoi', '34')",function(err,rows){
-        console.log("Data inserted !");
-        if(err) throw err;
+
+      let id_
+      let player1_
+      let player2_
+      let timestamp_
+      let score1_
+      let score_2_
+      if(playerNo == 1){
+        score1_ = 1
+        score2_ = 0
+      }
+      else if(playerNo == 2){
+        score1_ = 0
+        score2_ = 1
+      }
+      getRunningGames(function(rows1){
+        // A REMPLIR
+          // id_ = rows1[]
+          // player1_ = rows1[]
+          // player2_ = rows1[]
+          // timestamp_ = rows1[]
       });
+      
+      con.query("INSERT INTO played_game(id,player1,player2, score1,score2, timestamp) VALUES (?,?,?,?,?,?)", [id_, player1_, player2_, score1_, score2_, timestamp_],function(err,rows){
+      console.log("Data inserted !");
+      if(err) console.log("\n>>> [mysql error] :", err);
+   });
   
 
     }
@@ -199,7 +244,12 @@ io.on('connection', socket => {
     console.log('User disconnected')
 
 
-    //ENREGISTRER PARTIE EN COURS
+    con.query("UPDATE running_games SET pos_p1=?, pos_p2=?, points_p1=?, points_p2=?, dice1=?, dice2=?, player_turn=?, hub=?, player1=?, player2=?) WHERE ((player1=(SELECT id FROM players WHERE name=?) and player2=(SELECT id FROM players WHERE name=?)) OR (player2=(SELECT id FROM players WHERE name=?) and player1=(SELECT id FROM players WHERE name=?)) ", [JSON.stringify(p1_pos),JSON.stringify(p2_pos),0,0, dice1Value, dice2Value, playerNo, 0, p1Name, p2Name, p1Name, p2Name, p1Name, p2Name], function(err,rows){
+      console.log("\n>>> [mysql error] :", err)
+
+    
+      //vider joueur
+    });    
   });
 });
 
@@ -211,6 +261,27 @@ process.on('SIGTERM', () => {
     console.log('Http server closed.')
   })
 })
+
+getRunningGames = function(callback) {
+  con.connect()
+
+  con.query("SELECT * FROM running_games WHERE ((player1=(SELECT id FROM players WHERE name=?) and player2=(SELECT id FROM players WHERE name=?)) OR (player2=(SELECT id FROM players WHERE name=?) and player1=(SELECT id FROM players WHERE name=?))", [p1Name, p2Name, p1Name, p2Name], function(err1, rows1){
+    if (err1){
+      console.log("\n>>> [mysql error-Select] :", err1)
+    }
+    else{
+      if(rows1 && rows1.length){
+        callback(rows1);
+      }
+      else{callback("no")}
+      
+    }
+  });
+
+
+  con.end()
+}
+
 
 function throwDice(){
   return (Math.floor(Math.random() * 6)) + 1; //return number between 0 and 5 we add 1 to make it from 1 to 6
@@ -336,7 +407,6 @@ function move(player, newP1_pos, newP2_pos, position, diceValue, socket){
         pawnSum = (newP2_pos[25]+newP2_pos[24]+newP2_pos[23]+newP2_pos[22]+newP2_pos[21]+newP2_pos[20]+newP2_pos[19])
         console.log(pawnSum)
         if(position+diceValue >= 25 && pawnSum == 15){ //case where the pawn goes out of the board (it may have omponent pawn too)
-          console.log("je suce des bites")
           newP2_pos[position] -= 1;
           newP2_pos[25] += 1;
         }
