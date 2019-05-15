@@ -2,19 +2,16 @@
 
 
 
-- Entrer l'instance ou récup partie{
-    finir la récuperation de partie
-    Faire qqch des données récupérées
-}
 
-- Enregistrer une partie finie{
-     voir les rows mettre les bons id
-}
+- Si clic sur nouvelle partie leur mettre vraiment une nouvelle partie et pas l'enregistrement
+
+- Bordel lorsque deconnecte
+- Si leave il faut enlever les boutons !
 
 
-- Enregistrer partie si quitte {
-    
-    Supprimer les joueurs en cours
+
+- Enregistrer partie si quitte {    
+    Faire un appel dans disconnect pour leave
 }
 
 
@@ -26,3 +23,22 @@ Si nouveau revient obligé nouvelle aprtie
 Si c'est les deux mêmes joueurs reprendre ou nouvelle partie
 S'ils cliquent sur nouvelle aprtie supprimer l'instance existante dans partie en cours
 Page statistique
+
+
+CE QUI A ETE ADD :
+- Username :
+    Vérifie dans la database et add si inexistant
+
+- Quand une partie se lance :
+    Insert immédiatement le record dans running_games pour pouvoir l'udpate au cas ou
+
+- Récupération partie :
+    Si les deux joueurs avait déjà une partie en cours ils continuent leur parties
+    S'ils cliquent sur nouvelle partie une nouvelle se lance
+
+- Victory :
+    Supprime de running_games et add dans played_games
+    Ajoute les parties jouées et les victoires dans players
+
+- Enregistrement de la partie si quitte :
+    Partie complétement enregistrer si un joueur quitte
