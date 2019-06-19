@@ -1,31 +1,18 @@
+ §§§ A FAIRE §§§
+
 - salons !!
-
-
-
-
+- réinitialiser données quand fin de partie
 - Si clic sur nouvelle partie leur mettre vraiment une nouvelle partie et pas l'enregistrement
-
 - Bordel lorsque deconnecte
 - Si leave il faut enlever les boutons !
+- Enregistrer partie si quitte : Faire un appel dans disconnect pour leave
+- bloquer jeu si un quitte
+- Si nouveau revient obligé nouvelle aprtie
+- Si c'est les deux mêmes joueurs reprendre ou nouvelle partie
+- S'ils cliquent sur nouvelle aprtie supprimer l'instance existante dans partie en cours
 
 
-
-- Enregistrer partie si quitte {    
-    Faire un appel dans disconnect pour leave
-}
-
-
-
-
-
-bloquer jeu si un quitte
-Si nouveau revient obligé nouvelle aprtie
-Si c'est les deux mêmes joueurs reprendre ou nouvelle partie
-S'ils cliquent sur nouvelle aprtie supprimer l'instance existante dans partie en cours
-Page statistique
-
-
-CE QUI A ETE ADD :
+§§§ CE QUI A ETE ADD §§§
 - Username :
     Vérifie dans la database et add si inexistant
 
@@ -42,3 +29,10 @@ CE QUI A ETE ADD :
 
 - Enregistrement de la partie si quitte :
     Partie complétement enregistrer si un joueur quitte
+........
+- Enregistrer la durée de la partie en h:m:s (à la place d'un timestamp)
+- Affichage des données de la partie à la fin
+- Page stats
+
+Bugs :
+- Enregistre victoire même si partie pas enregistrée dans table

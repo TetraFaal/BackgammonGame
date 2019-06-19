@@ -34,14 +34,7 @@ class Gameboard extends Component {
 			this.props.getPositions2(data[1]);
 			this.props.getPositions(this.props.p1_pos,this.props.p2_pos);
 		})
-		socket.on('newGamePos', data => {
-			this.props.getPositions1(data[0]);
-			this.props.getPositions2(data[1]);
-			this.props.getPositions(this.props.p1_pos,this.props.p2_pos);
-		})
 		socket.on('nextTurn', data => {
-			console.log(data)
-			console.log(this.props.playerNo)
 			if(data === this.props.playerNo) {
 				this.setState({ playerTurn : false })
 			}
@@ -49,6 +42,9 @@ class Gameboard extends Component {
 				this.setState({ playerTurn : true })
 				this.setState({ diceThrown : false })
 			}
+		})
+		socket.on('summary', data => {
+			window.alert("Résumé de partie\n\nID partie : " + data[0] + "\nJoueur 1 : " + data[1] + "\nJoueur 2 : " + data[2] + "\nTemps de jeu : " + data[3] + "\nScore Joueur 1 : " + data[4] + "\nScore Joueur 2 : " + data[5])
 		})
 	}
 

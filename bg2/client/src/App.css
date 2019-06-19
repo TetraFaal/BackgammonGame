@@ -29,6 +29,14 @@
   margin: 10px;
 }
 
+.Stats {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin: 10px;
+}
+
 .board {
   display: grid;
   width: 415px;
