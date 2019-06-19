@@ -29,7 +29,7 @@ io.use(sharedsession(session, {
   autoSave: true
 }));
 
-//Database connection data
+//Database connection params
 let con = mysql.createConnection({
 	host: "10.194.69.15",
 	user: "A2",
@@ -49,17 +49,19 @@ let p1Name = 'Joueur 1';
 let p2Name = 'Joueur 2';
 let p1Ready = '';
 let p2Ready = '';
-let dice1Value = '';
-let dice2Value = '';
-let playerNo = 0;
+let dice1Value = null;
+let dice2Value = null;
 let playerTurn = 0;
+let gameIsRunning = false;
+let victory = false;
 
-//Where the action starts -- called when a user connects to the server
+//Where the action starts --> called when a user connects to the server
 io.on('connection', socket => {
-  let username = '';
-  let playedDice = 0;
-  let hasPlayed = false;
-  let victory = false;
+  let username = ''; //username of the user
+  let playedDice = 0; //number of dice that the user played
+  let playerNo = 0; //number of the player (1 or 2)
+  let hasPlayed = false; //true if the user has played, otherwise false
+  
   console.log('\nUser connected')
 
   socket.on("login", function(userdata) {
@@ -103,19 +105,79 @@ io.on('connection', socket => {
 
   });
 
+  //Called when user chooses its "seat" (player1 or player2)
+  socket.on('choosePlayer', data => {
+    playerNo = data[2]
+    if (playerNo == 1) {
+      p1Name = data[0];
+      p1Ready = data[1];
+      console.log('Player 1 :',p1Name,' status is ', p1Ready);
+      io.sockets.emit('updatePlayer1', [p1Name, p1Ready])
+    }
+    else if (playerNo == 2) {
+      p2Name = data[0];
+      p2Ready = data[1];
+      console.log('Player 2 :',p2Name,' status is ', p2Ready);
+      io.sockets.emit('updatePlayer2', [p2Name, p2Ready])
+    }
+    else console.log("Problem with the player") 
+    getRunningGames(function(rows1){
+      if(rows1 != "no") {
+        io.sockets.emit('runningGame', true)
+      }
+      else io.sockets.emit('runningGame', false)
+    });
+    socket.emit('canLeave', true)
+  });
+
+  //Called when user leavs its "seat"
+  socket.on('leave', data => {
+    idFromName(p1Name, function(id){
+      let idtempo_ = id
+      idFromName(p2Name, function(id){
+        let id2tempo_ = id
+          register(data, playerTurn, idtempo_, id2tempo_, function(ok){});
+      });
+    });
+    socket.emit('canLeave', false)
+  });
+
   //Called when user starts a new game
-  socket.on('startNewGame', data => {
-    let playerNo = data
+  socket.on('startNewGame', data => {    
+    io.sockets.emit('runningGame', false)
+
+    gameIsRunning = true;
+    console.log("GameRunning" + gameIsRunning)
+
     const p1_pos_init = [14,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]; //Start position of p1 
     const p2_pos_init = [0,0,0,2,0,0,0,0,0,0,0,0,5,0,0,0,0,3,0,5,0,0,0,0,0,0]; //start position of p2
     p1_pos = p1_pos_init;
     p2_pos = p2_pos_init;
-    dice1Value = '';
-    dice2Value = '';
-    playerTurn = 0;
+    dice1Value = null;
+    dice2Value = null;
+    playerTurn = data;
+
+    con.query("DELETE FROM running_games WHERE (player1=(SELECT id FROM players WHERE name=?) and player2=(SELECT id FROM players WHERE name=?))", [p1Name, p2Name, p1Name, p2Name], function(err){
+      if(err) console.log("\n>>> [mysql error] :", err);
+    });
+    con.query("INSERT INTO running_games(pos_p1, pos_p2, points_p1, points_p2, dice1, dice2, player_turn, hub, player1, player2) VALUES(?, ?, 0, 0, ?, ?, ?, 0, (SELECT id FROM players WHERE name=?), (SELECT id FROM players WHERE name=?))", [JSON.stringify(p1_pos),JSON.stringify(p2_pos),dice1Value, dice2Value, playerTurn,p1Name, p2Name], function(err){
+      if (err) console.log("\n>>> [mysql error] :", err);
+    });
+
+    io.sockets.emit('updatePos', [p1_pos,p2_pos]);
+    io.sockets.emit('diceValues', [dice1Value,dice2Value]);
+    io.sockets.emit('nextTurn', playerTurn);
+  });
+
+  //Called when user continue running game
+  socket.on('continueGame', () => {
+    io.sockets.emit('runningGame', false)
+
+    gameIsRunning = true;
+    console.log("GameRunning" + gameIsRunning)
 
     getRunningGames(function(rows1){
-      if(rows1 != "no"){
+      if(rows1 != "no") {
         p1_pos = JSON.parse(rows1[0].pos_p1);
         p2_pos = JSON.parse(rows1[0].pos_p2);
         playerTurn = rows1[0].player_turn;
@@ -123,61 +185,18 @@ io.on('connection', socket => {
         points_p2 = 0;
         dice1Value = rows1[0].dice1;
         dice2Value = rows1[0].dice2;
-      }
-      else{
-        con.query("INSERT INTO running_games(pos_p1, pos_p2, points_p1, points_p2, dice1, dice2, player_turn, hub, player1, player2) VALUES(?, ?, 0, 0, 0, 0, ?, 0, (SELECT id FROM players WHERE name=?), (SELECT id FROM players WHERE name=?))", [JSON.stringify(p1_pos),JSON.stringify(p2_pos),playerTurn,p1Name, p2Name], function(err,rows){
-          if (err) console.log("\n>>> [mysql error] :", err);
-        });
-      }
-      
-      io.sockets.emit('diceValues', [dice1Value,dice2Value] );
-      io.sockets.emit('updatePos', [p1_pos,p2_pos]);
-
-      if(playerTurn == 0){
-        io.sockets.emit('nextTurn', playerNo)
-      }
-      else{
-        if(playerTurn == 1 ){
-          io.sockets.emit('nextTurn', 1)
-        }
-        if(playerTurn == 2){
-          io.sockets.emit('nextTurn', 2)
-        }
+               
+        io.sockets.emit('updatePos', [p1_pos,p2_pos]);
+        io.sockets.emit('diceValues', [dice1Value,dice2Value]);
+        io.sockets.emit('nextTurn', playerTurn);
       }
     });
-  });
-
-  //Called when user continue running game
-  socket.on('continueGame', () => {
-    getRunningGames(function(rows1){
-      p1_pos = JSON.parse(rows1[0].pos_p1);
-      p2_pos = JSON.parse(rows1[0].pos_p2);
-      playerTurn = rows1[0].player_turn;
-      points_p1 = 0;
-      points_p2 = 0;
-      dice1Value = rows1[0].dice1;
-      dice2Value = rows1[0].dice2;
-
-      io.sockets.emit('diceValues', [dice1Value,dice2Value] );
-      io.sockets.emit('updatePos', [p1_pos,p2_pos]);
-      if(playerTurn == 1 ){
-        io.sockets.emit('nextTurn', 1)
-      }
-      if(playerTurn == 2){
-        io.sockets.emit('nextTurn', 2)
-      }
-    });
-
   });
   // Called when the player wants to move a pawn
   socket.on('movePawn', data => {
     const index = data[0];
     const diceValue = data[1];
     const diceNo = data[2];
-    playerNo = data[3];
-    
-    playerTurn = playerNo
-
     /*
     index : the index number of the pawn place
     diceValue : the value of the played dice
@@ -186,12 +205,38 @@ io.on('connection', socket => {
     */
     
     let newPos = move(playerNo, p1_pos, p2_pos, index, diceValue, socket);
+    
     p1_pos = newPos.p1_pos;
     p2_pos = newPos.p2_pos;
-    hasPlayed = newPos.hasPlayed;
-    victory = newPos.victory;
     io.sockets.emit('updatePos', [p1_pos,p2_pos])
 
+    hasPlayed = newPos.hasPlayed;
+    if(hasPlayed) {
+      if(diceNo == 1) {
+        dice1Value = null;
+        io.sockets.emit('diceValues', [dice1Value, dice2Value]);
+      }
+      else if(diceNo == 2) {
+        dice2Value = null;
+        io.sockets.emit('diceValues', [dice1Value, dice2Value]);
+      }
+      if(playedDice == 1) {
+        if(playerNo == 1) {
+          playerTurn = 2
+          io.sockets.emit('nextTurn', playerTurn)
+        }
+        else if(playerNo == 2) {
+          playerTurn = 1
+          io.sockets.emit('nextTurn', playerTurn)
+        }
+        playedDice = 0
+      }
+      else {
+        playedDice ++
+      }
+    }
+    
+    victory = newPos.victory;
     if(victory) {
       let id_
       let player1_
@@ -244,24 +289,19 @@ io.on('connection', socket => {
             }
           }
         });
-        con.query("DELETE FROM running_games WHERE ((player1=? and player2=?) OR (player2=? and player1=?))", [player1_, player2_, player1_, player2_], function(err1, rows1){
+        con.query("DELETE FROM running_games WHERE id=?", [id_], function(err1, rows1){
           if(err1) console.log("\n>>> [mysql error] :", err1);
-        });
+        });        
+        gameIsRunning = false;
+        dice1Value = null;
+        dice2Value = null;
+        io.sockets.emit('diceValues', [dice1Value,dice2Value])
+        playerTurn = -1;
+        io.sockets.emit('nextTurn', playerTurn)
         //Sending data to players
         io.sockets.emit('summary', [id_,p1Name,p2Name, playingTime_, score1_, score2_])
       });
     }
-
-    if(hasPlayed) {
-      io.sockets.emit('dicePlayed', diceNo)
-      if(playedDice == 1) {
-        io.sockets.emit('nextTurn', playerNo) //emits the player that finished the turn
-        playedDice = 0
-      }
-      else {
-        playedDice ++
-      }
-    }    
     
   });
 
@@ -270,38 +310,6 @@ io.on('connection', socket => {
     dice1Value = throwDice();
     dice2Value = throwDice();
     io.sockets.emit('diceValues', [dice1Value,dice2Value] );
-  });
-
-  //Called when user chooses its "seat" (player1 or player2)
-  socket.on('choosePlayer', data => {
-    playerNo = data[2]
-    if (playerNo == 1) {
-      p1Name = data[0];
-      p1Ready = data[1];
-      console.log('Player 1 :',p1Name,' status is ', p1Ready);
-      io.sockets.emit('updatePlayer1', [p1Name, p1Ready])
-    }
-    else if (playerNo == 2) {
-      p2Name = data[0];
-      p2Ready = data[1];
-      console.log('Player 2 :',p2Name,' status is ', p2Ready);
-      io.sockets.emit('updatePlayer2', [p2Name, p2Ready])
-    }
-    else console.log("Problem with the player") 
-    socket.emit('canLeave', true) 
-  });
-
-  //Called when user leavs its "seat"
-  socket.on('leave', data => {
-    idFromName(p1Name, function(id){
-      let idtempo_ = id
-      idFromName(p2Name, function(id){
-        let id2tempo_ = id
-          register(data, playerTurn, idtempo_, id2tempo_, function(ok){});
-      });
-    });
-
-    socket.emit('canLeave', false)
   });
 
   //Called when user clicks on statistics
@@ -317,25 +325,20 @@ io.on('connection', socket => {
   })
 
   socket.on('disconnect', () => {
-    idFromName(p1Name, function(id){
-      let idtempo_ = id
-      idFromName(p2Name, function(id){
-        let id2tempo_ = id
-        register(0, playerTurn, idtempo_, id2tempo_, function(ok){
-          console.log('User disconnected')
+    if (playerNo != 0) {
+      idFromName(p1Name, function(id){
+        let idtempo_ = id
+        idFromName(p2Name, function(id){
+          let id2tempo_ = id
+          register(playerNo, playerTurn, idtempo_, id2tempo_, function(ok){});
         });
       });
-    });
-    if(playerNo == 1){
-      io.sockets.emit('updatePlayer1', ["Joueur 1", false])
     }
-    if(playerNo == 2){
-      io.sockets.emit('updatePlayer2', ["Joueur 2", false])
-    }
+    console.log('User disconnected')
   });
 });
 
-server.listen(port, () => console.log(`Listening on port ${port}`));
+server.listen(3000, "0.0.0.0", () => console.log(`Listening on port ${port}`));
 
 process.on('SIGTERM', () => {
   console.log('Closing http server.')
@@ -344,23 +347,37 @@ process.on('SIGTERM', () => {
   })
 })
 
-register = function(data, playerTurn, idtempo_, id2tempo_, callback){
-
-  con.query("UPDATE running_games SET pos_p1=?, pos_p2=?, points_p1=?, points_p2=?, dice1=?, dice2=?, player_turn=?, hub=? WHERE ((player1=? and player2=?) OR (player2=? and player1=?))", [JSON.stringify(p1_pos),JSON.stringify(p2_pos),0,0, dice1Value, dice2Value, playerTurn, 0, idtempo_, id2tempo_, idtempo_, id2tempo_], function(err,rows){
-    if (err) console.log("\n>>> [mysql error] :", err);
-  });
-
-  if (data == 1) {
-    console.log("Player 1 left")
-    io.sockets.emit('updatePlayer1', ["Joueur 1", false])
+register = function(playerNo, playerTurn, idtempo_, id2tempo_, callback){
+  
+  if(gameIsRunning) {
+    con.query("UPDATE running_games SET pos_p1=?, pos_p2=?, points_p1=?, points_p2=?, dice1=?, dice2=?, player_turn=?, hub=? WHERE (player1=? and player2=?)", [JSON.stringify(p1_pos),JSON.stringify(p2_pos),0,0, dice1Value, dice2Value, playerTurn, 0, idtempo_, id2tempo_], function(err){
+      if (err) console.log("\n>>> [mysql error] :", err);
+    });
+    console.log("Database updated");
+    gameIsRunning = false;
   }
-  else if (data == 2) {
+
+  dice1Value = null;
+  dice2Value = null;
+  io.sockets.emit('diceValues', [dice1Value,dice2Value])
+  playerTurn = -1;
+  io.sockets.emit('nextTurn', playerTurn)
+  
+  if (playerNo == 1) {
+    p1Name = 'Joueur 1';
+    p1Ready = false;
+    io.sockets.emit('updatePlayer1', [p1Name, p1Ready]);
+    console.log("Player 1 left");
+  }
+  else if (playerNo == 2) {   
+    p2Name = 'Joueur 2';
+    p2Ready = false;
+    io.sockets.emit('updatePlayer2', [p2Name, p2Ready]);
     console.log("Player 2 left");
-    io.sockets.emit('updatePlayer2', ["Joueur 2", false])
   }
-  else console.log("Problem with the player") 
+  else console.log("Problem with the player");
 
-  callback("ok")
+  callback("ok");
 }
 
 getRunningGames = function(callback) {
@@ -368,7 +385,7 @@ getRunningGames = function(callback) {
     let idtempo_ = id
     idFromName(p2Name, function(id){
       let id2tempo_ = id
-      con.query("SELECT * FROM running_games WHERE ((player1=? and player2=?) OR (player2=? and player1=?))", [idtempo_, id2tempo_, idtempo_, id2tempo_], function(err1, rows1){
+      con.query("SELECT * FROM running_games WHERE (player1=? and player2=?)", [idtempo_, id2tempo_], function(err1, rows1){
         if (err1){
           console.log("\n>>> [mysql error-Select] :", err1)
         }
@@ -414,7 +431,6 @@ function move(player, newP1_pos, newP2_pos, position, diceValue, socket){
   canPlay : true if the player has at least one possible move
   hasPlayed : true if the player could actually move the selected pawn 
   */
-
 
   /*
   Verifies that there is at least one possible move
@@ -558,7 +574,7 @@ function move(player, newP1_pos, newP2_pos, position, diceValue, socket){
   Victory check
   */
   if(newP1_pos[0]==15 && player == 1) victory = true
-  else if(newP2_pos[25==15 && player == 2]) victory = true
+  else if(newP2_pos[25]==15 && player == 2) victory = true
   else victory = false
 
 	return {
@@ -568,4 +584,3 @@ function move(player, newP1_pos, newP2_pos, position, diceValue, socket){
     victory: victory
   }
 }
-

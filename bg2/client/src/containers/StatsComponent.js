@@ -9,7 +9,7 @@ class Stats extends Component {
 	constructor(props) {
 		super(props);
 		this.state = {
-			//Grid definition -- this is how the api works (AgGridReact)
+			//Grid definition -- this is how the module works (AgGridReact)
 			columnDefs: [{
 			headerName: "ID", field: "id", sortable: true, filter: true
 			}, {

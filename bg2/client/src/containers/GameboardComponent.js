@@ -6,8 +6,8 @@ import{ setPos, setPos1, setPos2} from '../actions/index'
 class Gameboard extends Component {
 
 	state = {
-		dice1Value: '',
-		dice2Value: '',
+		dice1Value: null,
+		dice2Value: null,
 		posIndex: '',
 		playerTurn: false,
 		diceThrown: false,
@@ -20,15 +20,6 @@ class Gameboard extends Component {
 			this.setState({ dice1Value : data[0] });
 			this.setState({ dice2Value : data[1] });
 		})
-		socket.on('dicePlayed', data => {
-			let diceNo = data;
-			if(diceNo === 1) {
-				this.setState({ dice1Value : '' })
-			}
-			else if (diceNo === 2){
-				this.setState({ dice2Value : '' })
-			}
-		})
 		socket.on('updatePos', data => {
 			this.props.getPositions1(data[0]);
 			this.props.getPositions2(data[1]);
@@ -36,11 +27,14 @@ class Gameboard extends Component {
 		})
 		socket.on('nextTurn', data => {
 			if(data === this.props.playerNo) {
-				this.setState({ playerTurn : false })
+				this.setState({ playerTurn : true })
+				if (this.state.dice1Value == null && this.state.dice2Value == null){ 
+					this.setState({ diceThrown : false })
+				}				
+				else this.setState({ diceThrown : true })
 			}
 			else {
-				this.setState({ playerTurn : true })
-				this.setState({ diceThrown : false })
+				this.setState({ playerTurn : false })
 			}
 		})
 		socket.on('summary', data => {
@@ -55,8 +49,8 @@ class Gameboard extends Component {
 
 	movePawn = (diceValue, diceNo) => {
 		const {socket} = this.props;
-		if(diceValue !== '') {
-			socket.emit('movePawn', [this.state.posIndex,diceValue, diceNo,this.props.playerNo])
+		if(diceValue !== null) {
+			socket.emit('movePawn', [this.state.posIndex,diceValue, diceNo])
 		}
 	}
 

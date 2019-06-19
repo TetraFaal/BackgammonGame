@@ -28,6 +28,9 @@ class Players extends Component {
                 player2Ready: data[1]
             })
         })
+        socket.on('runningGame', data => {
+            this.setState({runningGame : data})
+        })
         socket.on('canLeave', data => {
             this.setState({canLeave : data})
         })
@@ -41,9 +44,9 @@ class Players extends Component {
 		socket.emit('startNewGame', this.props.playerNo)
     }
 
-    newGame = () => {
+    continueGame = () => {
 		const {socket} = this.props;
-		socket.emit('continueGame')
+        socket.emit('continueGame')
     }
 
     leave = () => {
@@ -54,17 +57,14 @@ class Players extends Component {
     
     choosePlayer = (playerNoInput) => {
         const {socket} = this.props;
-        let isReady = false;
         if(this.props.playerNo === 0) {
             if(playerNoInput === 1 && !this.state.player1Ready){
-                isReady = true;
                 this.props.setPlayerNumber(playerNoInput)
-                socket.emit('choosePlayer', [this.props.username, isReady, playerNoInput])
+                socket.emit('choosePlayer', [this.props.username, true, playerNoInput])
             }
             else if(playerNoInput === 2 && !this.state.player2Ready ){
-                isReady = true;
                 this.props.setPlayerNumber(playerNoInput)
-                socket.emit('choosePlayer', [this.props.username, isReady, playerNoInput])
+                socket.emit('choosePlayer', [this.props.username, true, playerNoInput])
             }
         }
     }

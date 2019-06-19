@@ -7,7 +7,7 @@ import GameboardComponent from './containers/GameboardComponent'
 import PlayersComponent from './containers/PlayersComponent'
 import StatsComponent from './containers/StatsComponent'
 
-const socket = io("http://localhost:3000");
+const socket = io("http://172.22.22.54:3000"); //CHANGE BY "http://YOUR-LOCAL-ADRESS:3000" (if you want testing with multiple device on LAN) OR "http://localhost:3000"
 
 class App extends Component {
 
