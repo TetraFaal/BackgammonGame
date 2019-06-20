@@ -6,6 +6,7 @@ const initialState = {
     p1_pos: [],
     p2_pos: [],
     positions: [],
+    roomNumber: null
 }
 
 function Reducer (state = initialState, action){
@@ -32,6 +33,9 @@ function Reducer (state = initialState, action){
             return {...state, ...action}
         }
         case "SET_PLAYER_NO": {
+            return {...state, ...action}
+        }
+        case "UPDATE_ROOM": {
             return {...state, ...action}
         }
         default:

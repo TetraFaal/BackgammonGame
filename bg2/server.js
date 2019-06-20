@@ -6,7 +6,7 @@ const socketIO = require('socket.io');
 const session = require("express-session")({
   secret: "my-secret",
   resave: true,
-  saveUninitialized: true
+  saveUninitialized: true 
 });
 const sharedsession = require("express-socket.io-session");
 var moment = require('moment');
@@ -43,6 +43,69 @@ con.connect(function(err){
 });
 
 //Initializing the variables
+function GameData(p1_pos, p2_pos, p1Name, p2Name, p1Ready, p2Ready, dice1Value, dice2Value, playerTurn, gameIsRunning, victory, roomNo) {
+  this.p1_pos = p1_pos;
+  this.p2_pos = p2_pos;
+  this.p1Name = p1Name;
+  this.p2Name = p2Name;
+  this.p1Ready = p1Ready;
+  this.p2Ready = p2Ready;
+  this.dice1Value = dice1Value;
+  this.dice2Value = dice2Value;
+  this.playerTurn = playerTurn;
+  this.gameIsRunning = gameIsRunning;
+  this.victory = victory;
+  this.roomNo = roomNo;
+}
+
+let room1Data = new GameData( 
+  ['','','','','','','','','','','','','','','','','','','','','','','','','',''], 
+  ['','','','','','','','','','','','','','','','','','','','','','','','','',''], 
+  'Joueur 1', 
+  'Joueur 2', 
+  '', 
+  '', 
+  null, 
+  null, 
+  0, 
+  false, 
+  false,
+  1
+);
+
+let room2Data = new GameData( 
+  ['','','','','','','','','','','','','','','','','','','','','','','','','',''], 
+  ['','','','','','','','','','','','','','','','','','','','','','','','','',''], 
+  'Joueur 1', 
+  'Joueur 2', 
+  '', 
+  '', 
+  null, 
+  null, 
+  0, 
+  false, 
+  false,
+  2
+);
+
+let room3Data = new GameData( 
+  ['','','','','','','','','','','','','','','','','','','','','','','','','',''], 
+  ['','','','','','','','','','','','','','','','','','','','','','','','','',''], 
+  'Joueur 1', 
+  'Joueur 2', 
+  '', 
+  '', 
+  null, 
+  null, 
+  0, 
+  false, 
+  false,
+  3
+);
+
+let rooms = [room1Data, room2Data, room3Data];
+
+
 let p1_pos = ['','','','','','','','','','','','','','','','','','','','','','','','','',''];
 let p2_pos = ['','','','','','','','','','','','','','','','','','','','','','','','','',''];
 let p1Name = 'Joueur 1';
@@ -61,6 +124,8 @@ io.on('connection', socket => {
   let playedDice = 0; //number of dice that the user played
   let playerNo = 0; //number of the player (1 or 2)
   let hasPlayed = false; //true if the user has played, otherwise false
+  let room = null;
+  let roomData;
   
   console.log('\nUser connected')
 
@@ -79,7 +144,7 @@ io.on('connection', socket => {
 
   //Called when user logs in with username
   socket.on('username', data => {
-    username = data[0];
+    username = data;
     socket.emit('loginStatus', true)
     //On login, server sends the actual situation to the new-coming user
     socket.emit('updatePos', [p1_pos,p2_pos])
@@ -103,6 +168,16 @@ io.on('connection', socket => {
       }
     });
 
+  });
+
+  //Called when user enters a room
+  socket.on('selectRoom', data => {
+    if(room != null) socket.leave(room)
+    room = data
+    socket.join(room)
+    roomData = rooms[room-1]
+    console.log(username + " joined the room number " + roomData.roomNo)
+    io.to(room).emit('message', `${username} a rejoins le salon ${roomData.roomNo}`)
   });
 
   //Called when user chooses its "seat" (player1 or player2)

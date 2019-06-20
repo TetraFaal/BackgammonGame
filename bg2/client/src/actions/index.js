@@ -95,3 +95,10 @@ export const setPlayerNo = (playerNo) => {
     playerNo: temp
   }
 }
+export const updateRoom = (roomNum) => {
+  const temp = roomNum
+  return {
+    type: 'UPDATE_ROOM',
+    roomNumber: temp
+  }
+}

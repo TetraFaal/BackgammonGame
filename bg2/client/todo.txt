@@ -25,6 +25,7 @@ ________________________
 
 * Enregistrement de la partie si quitte :
     Partie complétement enregistrer si un joueur quitte
+
 ........
 19.06.19
 * Enregistrer la durée de la partie en h:m:s (à la place d'un timestamp)
