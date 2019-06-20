@@ -2,12 +2,15 @@ _________________
  §§§ A FAIRE §§§
 _________________
 
-* salons !!
-* Si nouveau revient obligé nouvelle aprtie
+* Améliorer visuel : afficher joueurs dans salon, UI, etc.
+* Plus de stats
+* Régler bugs
+* Tests unitaires
+
 ________________________
 §§§ CE QUI A ETE ADD §§§
 ________________________
-........
+...........
 01-31.05.19
 * Username :
     Vérifie dans la database et add si inexistant
@@ -36,9 +39,13 @@ ________________________
     * On peut slmt reprendre si partie existe dans running_games
 * Correction de plein de bugs, amélioration du code et de la logique
 
+........
+20.06.19
+* SALONS \o/ 
+
 ____________
 §§§ BUGS §§§
 ____________
 * Enregistre victoire même si erreur dans enregistrement bdd
 * Si un dé pas joué lorsqu'on reprend une partie, on peut jouer 2 fois
-*Timestamps inutile en cas de reprise de partie
+* Timestamps inutile en cas de reprise de partie

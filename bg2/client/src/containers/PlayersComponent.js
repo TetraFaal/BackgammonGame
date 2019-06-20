@@ -11,6 +11,7 @@ class Players extends Component {
         player1Ready: false,
         player2Ready: false,
         canLeave: false,
+        canLeaveRoom: false,
         runningGame: false,
     };
 
@@ -28,11 +29,11 @@ class Players extends Component {
                 player2Ready: data[1]
             })
         })
-        socket.on('runningGame', data => {
-            this.setState({runningGame : data})
-        })
         socket.on('canLeave', data => {
             this.setState({canLeave : data})
+        })
+        socket.on('runningGame', data => {
+            this.setState({runningGame : data})
         })
         socket.on('message', data => {
             window.alert(data)
@@ -81,12 +82,12 @@ class Players extends Component {
                     <div></div>
                 }
                 {
-                    (this.state.player1Ready && this.state.player2Ready) ?
+                    (this.state.player1Ready && this.state.player2Ready && this.state.canLeave) ?
                     <Button action={this.newGame} buttonTitle = "Nouvelle partie" /> :
                     <div></div>
                 }
                 {
-                    (this.state.runningGame) ?
+                    (this.state.runningGame && this.state.canLeave) ?
                     <Button action={this.continueGame} buttonTitle = "Reprendre partie" /> :
                     <div></div>
                 }

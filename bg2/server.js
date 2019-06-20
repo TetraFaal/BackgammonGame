@@ -56,25 +56,10 @@ function GameData(p1_pos, p2_pos, p1Name, p2Name, p1Ready, p2Ready, dice1Value, 
   this.victory = victory;
   this.roomNo = roomNo;
 }
-
 let room1Data = new GameData(['','','','','','','','','','','','','','','','','','','','','','','','','',''],['','','','','','','','','','','','','','','','','','','','','','','','','',''],'Joueur 1','Joueur 2','','',null,null,0,false,false,1);
 let room2Data = new GameData(['','','','','','','','','','','','','','','','','','','','','','','','','',''],['','','','','','','','','','','','','','','','','','','','','','','','','',''],'Joueur 1','Joueur 2','','',null,null,0,false,false,2);
 let room3Data = new GameData(['','','','','','','','','','','','','','','','','','','','','','','','','',''],['','','','','','','','','','','','','','','','','','','','','','','','','',''],'Joueur 1','Joueur 2','','',null,null,0,false,false,3);
 let rooms = [room1Data, room2Data, room3Data];
-
-/*
-let p1_pos = ['','','','','','','','','','','','','','','','','','','','','','','','','',''];
-let p2_pos = ['','','','','','','','','','','','','','','','','','','','','','','','','',''];
-let p1Name = 'Joueur 1';
-let p2Name = 'Joueur 2';
-let p1Ready = '';
-let p2Ready = '';
-let dice1Value = null;
-let dice2Value = null;
-let playerTurn = 0;
-let gameIsRunning = false;
-let victory = false;
-*/
 
 //Where the action starts --> called when a user connects to the server
 io.on('connection', socket => {
@@ -131,13 +116,12 @@ io.on('connection', socket => {
     socket.join(room)
     roomData = rooms[room-1]
     console.log(username + " joined the room number " + roomData.roomNo)
-    io.to(room).emit('message', `${username} a rejoins le salon ${roomData.roomNo}`)
     //On login, server sends the actual situation to the new-coming user
     socket.emit('updatePos', [roomData.p1_pos,roomData.p2_pos])
     socket.emit('updatePlayer1', [roomData.p1Name, roomData.p1Ready])
     socket.emit('updatePlayer2', [roomData.p2Name, roomData.p2Ready])
     socket.emit('diceValues', [roomData.dice1Value,roomData.dice2Value]);
-    socket.emit('canLeaveRom', true)
+    socket.emit('canLeaveRoom', true)
   });
 
   //Called when user chooses its "seat" (player1 or player2)
@@ -362,30 +346,39 @@ io.on('connection', socket => {
 
   //Called when user leavs the room
   socket.on('leaveRoom', data => {
-    socket.leave(room);
-    room = null;
-    roomData = null;
-    idFromName(roomData.p1Name, function(id){
-      let idtempo_ = id
-      idFromName(roomData.p2Name, function(id){
-        let id2tempo_ = id
-          register(roomData, data, idtempo_, id2tempo_, function(ok){});
+    if(playerNo == 1 || playerNo == 2) {
+      idFromName(roomData.p1Name, function(id){
+        let idtempo_ = id
+        idFromName(roomData.p2Name, function(id){
+          let id2tempo_ = id
+            register(roomData, data, idtempo_, id2tempo_, function(ok){
+              if(ok == "ok") {
+                console.log(username + " left the room number " + roomData.roomNo)
+                socket.leave(room);
+                room = null;
+                roomData = null;
+              }
+            });
+        });
       });
-    });
+    }
     socket.emit('canLeaveRoom', false)
   });
 
   socket.on('disconnect', () => {
     if(room != null) {
-      socket.leave(room);
-      room = null;
-      roomData = null;
-      if (playerNo != 0) {
+      if (playerNo == 1 || playerNo == 2) {
         idFromName(roomData.p1Name, function(id){
           let idtempo_ = id
           idFromName(roomData.p2Name, function(id){
             let id2tempo_ = id
-            register(roomData, playerNo, idtempo_, id2tempo_, function(ok){});
+            register(roomData, playerNo, idtempo_, id2tempo_, function(ok){
+              if(ok == "ok") {
+                socket.leave(room);
+                room = null;
+                roomData = null;
+              }
+            });
           });
         });
       }
@@ -404,7 +397,6 @@ process.on('SIGTERM', () => {
 })
 
 register = function(roomData, playerNo, idtempo_, id2tempo_, callback){
-  
   if(roomData.gameIsRunning) {
     con.query("UPDATE running_games SET pos_p1=?, pos_p2=?, points_p1=?, points_p2=?, dice1=?, dice2=?, player_turn=?, hub=? WHERE (player1=? and player2=?)", [JSON.stringify(roomData.p1_pos),JSON.stringify(roomData.p2_pos),0,0, roomData.dice1Value, roomData.dice2Value, roomData.playerTurn, 0, idtempo_, id2tempo_], function(err){
       if (err) console.log("\n>>> [mysql error] :", err);
@@ -433,6 +425,7 @@ register = function(roomData, playerNo, idtempo_, id2tempo_, callback){
   }
   else console.log("Problem with the player");
 
+  playerNo = 0;
   callback("ok");
 }
 

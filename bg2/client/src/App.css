@@ -48,6 +48,13 @@
   background: url(./img/board.png)
 }
 
+.roomButtons {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
 .place {
   text-align: center;
   padding: 5px;

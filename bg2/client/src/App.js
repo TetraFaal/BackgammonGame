@@ -10,7 +10,7 @@ import RoomComponent from './containers/RoomComponent';
 
 const socket = io("http://172.22.22.54:3000");
 //CHANGE BY "http://YOUR-LOCAL-ADRESS:3000" (if you want testing with multiple device on LAN) OR BY  "http://localhost:3000"
-
+// NOTE : if you use the localhost adress, sock-js could send you errors but they don't have any influence
 class App extends Component {
 
   render() {
