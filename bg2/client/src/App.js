@@ -5,10 +5,11 @@ import './App.css'
 import LoginComponent from './containers/LoginComponent'
 import GameboardComponent from './containers/GameboardComponent'
 import PlayersComponent from './containers/PlayersComponent'
-import StatsComponent from './containers/StatsComponent'
+import PlayerStatsComponent from './containers/PlayerStatsComponent'
+import GameStatsComponent from './containers/GameStatsComponent'
 import RoomComponent from './containers/RoomComponent';
 
-const socket = io("http://172.22.22.54:3000");
+const socket = io("http://localhost:3000");
 //CHANGE BY "http://YOUR-LOCAL-ADRESS:3000" (if you want testing with multiple device on LAN) OR BY  "http://localhost:3000"
 // NOTE : if you use the localhost adress, sock-js could send you errors but they don't have any influence
 class App extends Component {
@@ -32,7 +33,8 @@ class App extends Component {
           }                           
           </div>
         }
-        <StatsComponent {...this.props} socket = {socket}/>
+        <PlayerStatsComponent {...this.props} socket = {socket}/>
+        <GameStatsComponent {...this.props} socket = {socket}/>
       </div>
     );
   }

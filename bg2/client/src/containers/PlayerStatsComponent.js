@@ -21,6 +21,12 @@ class Stats extends Component {
 			}, {
 			headerName: "Taux de victoire", field: "rate", sortable: true, filter: true
 			}, {
+			headerName: "Adversaire favori", field: "opponent", sortable: true, filter: true
+			}, {
+			headerName: "Temps de jeu moyen", field: "timeAvg", sortable: true, filter: true
+			}, {
+			headerName: "Temp de jeu total", field: "timeSum", sortable: true, filter: true
+			}, {
 			headerName: "Date d'inscription", field: "register_date", sortable: true, filter: true
 			}],
 			rowData: [{}],
@@ -30,17 +36,17 @@ class Stats extends Component {
 
 	componentDidMount() {
 		const {socket} = this.props;
-		socket.on('stats', data => {
+		socket.on('playerStats', data => {
 			//The data recieved from server is put in the rows of the grid
 			this.setState({rowData :  data});
 		})
 	}
 
-	getStats = async e => {
+	getStats = () => {
 		if (!this.state.showStats) {
 			this.setState({showStats : true})
 			const {socket} = this.props;
-			socket.emit('getStats')
+			socket.emit('getPlayerStats')
 		}
 		else this.setState({showStats : false})
   	};
@@ -48,7 +54,7 @@ class Stats extends Component {
 	render() {
 		return (
 			<div className="Stats">
-				<Button action={this.getStats} buttonTitle = "Statistiques" />
+				<Button action={this.getStats} buttonTitle = "Statistiques Joueurs" />
 				{
 					this.state.showStats ?
 					<div style={{ height: '400px', width: '800px', alignSelf: 'center' }} className="ag-theme-balham">

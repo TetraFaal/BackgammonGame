@@ -42,7 +42,7 @@ con.connect(function(err){
 });
 
 //Initializing the variables
-function GameData(p1_pos, p2_pos, p1Name, p2Name, p1Ready, p2Ready, dice1Value, dice2Value, playerTurn, gameIsRunning, victory, roomNo) {
+function GameData(p1_pos, p2_pos, p1Name, p2Name, p1Ready, p2Ready, dice1Value, dice2Value, playerTurn, gameIsRunning, victory, roomNo, playingTime, startingTime) {
   this.p1_pos = p1_pos;
   this.p2_pos = p2_pos;
   this.p1Name = p1Name;
@@ -55,10 +55,12 @@ function GameData(p1_pos, p2_pos, p1Name, p2Name, p1Ready, p2Ready, dice1Value, 
   this.gameIsRunning = gameIsRunning;
   this.victory = victory;
   this.roomNo = roomNo;
+  this.playingTime = playingTime;
+  this.startingTime = startingTime;
 }
-let room1Data = new GameData(['','','','','','','','','','','','','','','','','','','','','','','','','',''],['','','','','','','','','','','','','','','','','','','','','','','','','',''],'Joueur 1','Joueur 2','','',null,null,0,false,false,1);
-let room2Data = new GameData(['','','','','','','','','','','','','','','','','','','','','','','','','',''],['','','','','','','','','','','','','','','','','','','','','','','','','',''],'Joueur 1','Joueur 2','','',null,null,0,false,false,2);
-let room3Data = new GameData(['','','','','','','','','','','','','','','','','','','','','','','','','',''],['','','','','','','','','','','','','','','','','','','','','','','','','',''],'Joueur 1','Joueur 2','','',null,null,0,false,false,3);
+let room1Data = new GameData(['','','','','','','','','','','','','','','','','','','','','','','','','',''],['','','','','','','','','','','','','','','','','','','','','','','','','',''],'Joueur 1','Joueur 2','','',null,null,0,false,false,1, null, null);
+let room2Data = new GameData(['','','','','','','','','','','','','','','','','','','','','','','','','',''],['','','','','','','','','','','','','','','','','','','','','','','','','',''],'Joueur 1','Joueur 2','','',null,null,0,false,false,2, null, null);
+let room3Data = new GameData(['','','','','','','','','','','','','','','','','','','','','','','','','',''],['','','','','','','','','','','','','','','','','','','','','','','','','',''],'Joueur 1','Joueur 2','','',null,null,0,false,false,3, null, null);
 let rooms = [room1Data, room2Data, room3Data];
 
 //Where the action starts --> called when a user connects to the server
@@ -163,11 +165,15 @@ io.on('connection', socket => {
     roomData.dice1Value = null;
     roomData.dice2Value = null;
     roomData.playerTurn = data;
+    roomData.playingTime = moment().hours(0).minutes(0).seconds(0).format("HH:mm:ss")
+    let now = moment()
+    roomData.startingTime = moment(now, "DD/MM/YYYY HH:mm:ss")
+    console.log(roomData.startingTime)
 
     con.query("DELETE FROM running_games WHERE (player1=(SELECT id FROM players WHERE name=?) and player2=(SELECT id FROM players WHERE name=?))", [roomData.p1Name, roomData.p2Name, roomData.p1Name, roomData.p2Name], function(err){
       if(err) console.log("\n>>> [mysql error] :", err);
     });
-    con.query("INSERT INTO running_games(pos_p1, pos_p2, points_p1, points_p2, dice1, dice2, player_turn, hub, player1, player2) VALUES(?, ?, 0, 0, ?, ?, ?, 0, (SELECT id FROM players WHERE name=?), (SELECT id FROM players WHERE name=?))", [JSON.stringify(roomData.p1_pos),JSON.stringify(roomData.p2_pos),roomData.dice1Value, roomData.dice2Value, roomData.playerTurn,roomData.p1Name, roomData.p2Name], function(err){
+    con.query("INSERT INTO running_games(pos_p1, pos_p2, points_p1, points_p2, dice1, dice2, player_turn, hub, player1, player2, length) VALUES(?, ?, 0, 0, ?, ?, ?, 0, (SELECT id FROM players WHERE name=?), (SELECT id FROM players WHERE name=?), ?)", [JSON.stringify(roomData.p1_pos),JSON.stringify(roomData.p2_pos),roomData.dice1Value, roomData.dice2Value, roomData.playerTurn,roomData.p1Name, roomData.p2Name, roomData.playingTime], function(err){
       if (err) console.log("\n>>> [mysql error] :", err);
     });
 
@@ -192,6 +198,9 @@ io.on('connection', socket => {
         points_p2 = 0;
         roomData.dice1Value = rows1[0].dice1;
         roomData.dice2Value = rows1[0].dice2;
+        roomData.playingTime = rows1[0].length;
+        let now = moment()
+        roomData.startingTime = moment(now, "DD/MM/YYYY HH:mm:ss")
                
         io.to(room).emit('updatePos', [roomData.p1_pos,roomData.p2_pos]);
         io.to(room).emit('diceValues', [roomData.dice1Value,roomData.dice2Value]);
@@ -259,7 +268,8 @@ io.on('connection', socket => {
       let timestamp_
       let score1_
       let score2_
-      let playingTime_
+      let currentLength
+      let totalLength
 
       if(playerNo == 1){
         score1_ = 1
@@ -275,14 +285,11 @@ io.on('connection', socket => {
         player2_ = rows1[0].player2
         timestamp_ = rows1[0].timestamp
         // Calculate and display playing time in h:m:s format, needs some conversions, using momentJS & momentDurationFormat librairies
-        let startTime = rows1[0].timestamp
-        startTime.toISOString()
-        let endTime = new Date
-        endTime.toISOString()
-        playingTime_ = moment.utc(moment(endTime,"DD/MM/YYYY HH:mm:ss").diff(moment(startTime,"DD/MM/YYYY HH:mm:ss"))).format("HH:mm:ss")
-        
+        let now = moment()
+        let currentLength = moment.utc(moment(now,"DD/MM/YYYY HH:mm:ss").diff(moment(roomData.startingTime, "DD/MM/YYYY HH:mm:ss")))
+        let totalLength = moment(roomData.playingTime,"HH:mm:ss").add(moment.duration({seconds : moment(currentLength).seconds(), minutes :  moment(currentLength).minutes(), hours :  moment(currentLength).hours() })).format("HH:mm:ss")
         //Update database (removing game from "running_games" and adding it "played_games")
-        con.query("INSERT INTO played_game(id, player1, player2, score1, score2, date, length) VALUES (?,?,?,?,?,?,?)", [id_, player1_, player2_, score1_, score2_, timestamp_, playingTime_],function(err,rows){
+        con.query("INSERT INTO played_game(id, player1, player2, score1, score2, date, length) VALUES (?,?,?,?,?,?,?)", [id_, player1_, player2_, score1_, score2_, timestamp_, totalLength],function(err,rows){
           console.log("Data inserted !");
           if(err) console.log("\n>>> [mysql error] :", err);
           else {
@@ -310,25 +317,35 @@ io.on('connection', socket => {
         roomData.gameIsRunning = false;
         roomData.dice1Value = null;
         roomData.dice2Value = null;
+        roomData.playingTime = null;
+        roomData.startingTime = null;
         io.to(room).emit('diceValues', [roomData.dice1Value,roomData.dice2Value])
         roomData.playerTurn = -1;
         io.to(room).emit('nextTurn', roomData.playerTurn)
         //Sending data to players
-        io.to(room).emit('summary', [id_,roomData.p1Name,roomData.p2Name, playingTime_, score1_, score2_])
+        io.to(room).emit('summary', [id_,roomData.p1Name,roomData.p2Name, totalLength, score1_, score2_])
       });
     }
     
   });
 
-  //Called when user clicks on statistics
-  socket.on('getStats', () => {
-    con.query("SELECT * FROM players", (err,results) => {
-      if(err) throw err;
-      for(i=0;i<results.length; i++){
-        //Calculate the win rate in % for each player
-        results[i].rate = (results[i].win/results[i].games*100) 
-      }
-			socket.emit('stats', results);
+  //Called when user clicks on player statistics button
+  socket.on('getPlayerStats', () => {
+    con.query("SELECT * FROM players", (err,res) => {
+      if(err) console.log("\n>>> [mysql error] :", err);
+      getPlayerStats(res, function(stats){
+        socket.emit('playerStats', stats)
+      })
+    });
+  })
+
+  //Called when user clicks on game statistics button
+  socket.on('getGameStats', () => {
+    con.query("SELECT * FROM played_game", (err,res) => {
+      if(err) console.log("\n>>> [mysql error] :", err);
+      getGameStats(res, function(stats){
+        socket.emit('gameStats', stats)
+      })
     });
   })
 
@@ -398,15 +415,20 @@ process.on('SIGTERM', () => {
 
 register = function(roomData, playerNo, idtempo_, id2tempo_, callback){
   if(roomData.gameIsRunning) {
-    con.query("UPDATE running_games SET pos_p1=?, pos_p2=?, points_p1=?, points_p2=?, dice1=?, dice2=?, player_turn=?, hub=? WHERE (player1=? and player2=?)", [JSON.stringify(roomData.p1_pos),JSON.stringify(roomData.p2_pos),0,0, roomData.dice1Value, roomData.dice2Value, roomData.playerTurn, 0, idtempo_, id2tempo_], function(err){
+    let now = moment()
+    let currentLength = moment.utc(moment(now,"DD/MM/YYYY HH:mm:ss").diff(moment(roomData.startingTime, "DD/MM/YYYY HH:mm:ss")))
+    let totalLength = moment(roomData.playingTime,"HH:mm:ss").add(moment.duration({seconds : moment(currentLength).seconds(), minutes :  moment(currentLength).minutes(), hours :  moment(currentLength).hours() })).format("HH:mm:ss")
+    con.query("UPDATE running_games SET pos_p1=?, pos_p2=?, points_p1=?, points_p2=?, dice1=?, dice2=?, player_turn=?, hub=?, length=? WHERE (player1=? and player2=?)", [JSON.stringify(roomData.p1_pos),JSON.stringify(roomData.p2_pos),0,0, roomData.dice1Value, roomData.dice2Value, roomData.playerTurn, roomData.roomNo, totalLength ,idtempo_, id2tempo_], function(err){
       if (err) console.log("\n>>> [mysql error] :", err);
+      else console.log("Database updated");
     });
-    console.log("Database updated");
     roomData.gameIsRunning = false;
   }
 
   roomData.dice1Value = null;
   roomData.dice2Value = null;
+  roomData.playingTime = null;
+  roomData.startingTime = null;
   io.to(roomData.roomNo).emit('diceValues', [roomData.dice1Value,roomData.dice2Value])
   roomData.playerTurn = -1;
   io.to(roomData.roomNo).emit('nextTurn', roomData.playerTurn)
@@ -454,7 +476,79 @@ idFromName = function(name, callback){
       if(rows && rows.length){
         callback(rows[0].id)
       }
-      else{callback(0)}
+      else{callback(-1)}
+    }
+  });
+}
+
+function getPlayerStats (querryRes, callback) {
+  let stats = []
+  for(i=0;i<querryRes.length; i++){ //we need a loop to add the stats for each player in the database
+    querryRes[i].register_date = moment(querryRes[i].register_date).format("DD/MM/YYYY")
+    aggregatePlayerData(querryRes[i], function(player) {
+      querryRes[i] = player
+      stats.push(querryRes[i]) //We have to create a new array to store the data we got in "getOpponent" to avoid bugs
+      callback(stats)
+    })
+  }
+}
+
+//Called to get the most encountered opponent for a given player
+function aggregatePlayerData(player, callback) {
+  if(player.games > 0) {
+    player.rate = (player.win/player.games*100).toPrecision(3); //Calculate the win rate in % for each player
+    con.query("SELECT COUNT(player), player FROM (SELECT player2 AS player FROM played_game WHERE player1=? UNION ALL SELECT player1 AS player FROM played_game WHERE player2=?) AS tbl GROUP BY player ORDER BY COUNT(player) DESC LIMIT 1", [player.id, player.id], function(err1, res1){
+      if(err1) console.log("\n>>> [mysql error] :", err1);
+      else {
+        con.query("SELECT name FROM players WHERE ID=?", [res1[0].player], function(err2, res2){
+          if(err2) console.log("\n>>> [mysql error] :", err2);
+          else {
+            player.opponent = res2[0].name
+            con.query("SELECT SUM(TIME_TO_SEC(length)) AS timeSum, AVG(TIME_TO_SEC(length)) AS timeAvg FROM played_game WHERE (player1=? OR player2=?)", [player.id, player.id], function(err3, res3){
+              if(err2) console.log("\n>>> [mysql error] :", err3);
+              else {
+                player.timeSum = moment.duration(res3[0].timeSum, 'seconds').format("HH:mm:ss")
+                player.timeAvg = moment.duration(res3[0].timeAvg, 'seconds').format("HH:mm:ss")
+                callback(player)
+              }
+            })
+          }
+        })
+      }
+    })
+  }
+  else {
+    player.rate = "N/A"
+    player.opponent = "N/A"
+    player.timeSum = "00:00:00"
+    player.timeAvg = "00:00:00"
+    callback(player)
+  }
+}
+
+function getGameStats (querryRes, callback) {
+  let stats = []
+  for(i=0;i<querryRes.length; i++){ //we need a loop to add the stats for each player in the database
+    querryRes[i].date = moment(querryRes[i].date).format("DD/MM/YYYY HH:mm:ss")
+    getPlayerName(querryRes[i], function(game){
+      querryRes[i] = game
+      callback(querryRes)
+    })
+  }  
+}
+
+function getPlayerName (game, callback){
+  con.query("SELECT name FROM players WHERE id=?", [game.player1], function(err,res1){
+    if(err) console.log("\n>>> [mysql error-Select] :", err);
+    else{
+      con.query("SELECT name FROM players WHERE id=?", [game.player2], function(err,res2){
+        if(err) console.log("\n>>> [mysql error-Select] :", err);
+        else{
+          game.player1 = res1[0].name
+          game.player2 = res2[0].name
+          callback(game)
+        }
+      });
     }
   });
 }

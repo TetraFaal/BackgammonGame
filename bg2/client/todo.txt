@@ -2,10 +2,11 @@ _________________
  §§§ A FAIRE §§§
 _________________
 
-* Améliorer visuel : afficher joueurs dans salon, UI, etc.
-* Plus de stats
-* Régler bugs
+
 * Tests unitaires
+* Améliorer visuel : afficher joueurs dans salon, UI, etc.
+* Chat
+* Régler bugs
 
 ________________________
 §§§ CE QUI A ETE ADD §§§
@@ -41,11 +42,15 @@ ________________________
 
 ........
 20.06.19
-* SALONS \o/ 
+* SALONS \o/
+
+...........
+22-24.06.19
+* Ajout statistique parties
+* Ajout temps moyen, temps total  statistique joueurs
+* Correction calcul du temps de jeu (temps additionné à chaque fois)
+* Correction de bugs
 
 ____________
 §§§ BUGS §§§
 ____________
-* Enregistre victoire même si erreur dans enregistrement bdd
-* Si un dé pas joué lorsqu'on reprend une partie, on peut jouer 2 fois
-* Timestamps inutile en cas de reprise de partie
